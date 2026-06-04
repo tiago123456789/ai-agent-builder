@@ -86,6 +86,26 @@ cd apps/api && bun install && bun run dev
 cd apps/web && bun install && bun run dev
 ```
 
+## Docker
+
+Make sure [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/) are installed.
+
+```bash
+# Copy and configure environment variables (see "Environment Variables" above)
+cp apps/api/.env.example apps/api/.env
+
+# Build and start all services in detached mode
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+```
+
+The API will be available at `http://localhost:3001` and the web app at `http://localhost:5173`.
+
 ## How to Use the Agent API Outside the Agent Dashboard
 
 1. Access the dashboard and navigate to the **/agents** page
