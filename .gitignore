@@ -1,0 +1,13 @@
+node_modules
+.DS_Store
+dist
+build
+.env
+.env.local
+coverage
+.turbo
+apps/api/.env
+apps/api/node_modules
+
+apps/web/.env
+apps/web/node_modules
