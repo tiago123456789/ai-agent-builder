@@ -111,7 +111,6 @@ curl --request POST 'http://localhost:3001/agents/public/chat' \
   --header 'Content-Type: application/json' \
   --data-raw '{
     "apiKey": "your_api_key_here",
-    "agentSlug": "suporte-agente",
     "message": "user_question_now",
     "history": [
       {
