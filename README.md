@@ -82,9 +82,8 @@ VITE_API_URL=http://localhost:3001
 ## Development
 
 ```bash
-bun install
-bun run dev:api
-bun run dev:web
+cd apps/api && bun install && bun run dev
+cd apps/web && bun install && bun run dev
 ```
 
 ## How to Use the Agent API Outside the Agent Dashboard
