@@ -11,3 +11,4 @@ apps/api/node_modules
 
 apps/web/.env
 apps/web/node_modules
+.codex

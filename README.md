@@ -18,7 +18,7 @@ can set the agents for specific employees.
 - [x] Chat with AI agents
 - [x] Login
 - [x] Tools(to execute actions on third apps). PS: the tools are using the Plugin architecture to allow add new tools easier without change the core code.
-- [x] Remote Mcps integration where you can set the Mpcs servers the agents can access. PS: the mcps servers are using the Plugin architecture to allow add new tools easier without change the core code.
+- [x] Remote Mcps integration where you can set the Mpcs servers the agents can access. PS: the mcps servers are using the Plugin architecture to allow add new Mpc server easier without change the core code.
 - [x] RAG integration where you can set the RAG data store the agents can access.
    - [x] Add data on RAG
    - [x] Remove data from RAG
