@@ -7,8 +7,8 @@ can set the agents for specific employees.
 
 ## TODO:
 
-[] Create docker images for apps/api and apps/web
-[] Create a docker-compose file to run the project
+- [] Create docker images for apps/api and apps/web
+- [] Create a docker-compose file to run the project
 
 
 ## Features
