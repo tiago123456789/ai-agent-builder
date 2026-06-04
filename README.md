@@ -5,11 +5,6 @@
 The project has focus to allow create AI agents with a simple interface, but only it you
 can set the agents for specific employees.
 
-## TODO:
-
-- [] Create docker images for apps/api and apps/web
-- [] Create a docker-compose file to run the project
-
 
 ## Features
 
@@ -31,6 +26,10 @@ Monorepo with:
 
 - `apps/api`: API in Bun + Express + LangChainJS + OpenAI
 - `apps/web`: React + Vite SPA for login and chat
+
+## Architecture
+
+![Architecture Flow](flow-architecture.png)
 
 ## Environment Variables
 
