@@ -24,7 +24,7 @@ can set the agents for specific employees.
 
 Monorepo with:
 
-- `apps/api`: API in Bun + Express + LangChainJS + OpenAI
+- `apps/api`: API in Bun + Express + LangChainJS + OpenAI + RAG(Postgres) + Tool + Mcp servers
 - `apps/web`: React + Vite SPA for login and chat
 
 ## Architecture
