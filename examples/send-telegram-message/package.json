@@ -1,0 +1,20 @@
+{
+  "name": "tool-send-telegram-message",
+  "version": "1.0.0",
+  "module": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "@langchain/core": "^1.1.46",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "start": "bun run ./index.ts",
+    "build": "bun build ./index.ts --outdir ./dist --target bun --external @langchain/core --external zod"
+  }
+}

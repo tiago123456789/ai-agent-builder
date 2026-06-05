@@ -26,6 +26,7 @@
     "tool-hi": "0.1.0",
     "tool-postgres": "^0.2.0",
     "tool-search-internet": "^0.1.0",
+    "tool-send-telegram-message": "1.0.0",
     "tool-todos": "0.2.0",
     "zod": "^3.24.4"
   },
