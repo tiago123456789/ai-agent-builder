@@ -11,6 +11,7 @@ import { ragDataStoresRouter } from "./routes/rag-data-stores";
 import { usersRouter } from "./routes/users";
 import { modelsRouter } from "./routes/models";
 import { skillsRouter } from "./routes/skills";
+import { metricsRouter } from "./routes/metrics";
 import { agentsPublicRouter } from "./routes/agents-public";
 import { errorHandler } from "./middleware/error-handler";
 
@@ -35,6 +36,7 @@ export function createApp() {
   app.use("/models", modelsRouter);
   app.use("/skills", skillsRouter);
   app.use("/agents/public", agentsPublicRouter);
+  app.use("/metrics", metricsRouter)
 
   app.use(errorHandler);
 

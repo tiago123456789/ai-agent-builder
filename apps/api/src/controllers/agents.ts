@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { Metric, MetricHistogram } from "../lib/metrics";
 import { agentsRepository } from "../repository/agents";
 import { agentToolsRepository } from "../repository/agents-tools";
 import { agentMcpRepository } from "../repository/agents-mcp";
@@ -16,6 +17,23 @@ import {
 } from "../validations/agents";
 
 export class AgentsController {
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents",
+    },
+  })
   async chat(request: Request, response: Response, next: NextFunction) {
     const parsed = chatRequestSchema.safeParse(request.body);
 
@@ -38,6 +56,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents",
+    },
+  })
   async list(request: Request, response: Response, next: NextFunction) {
     try {
       const user = request.user!;
@@ -53,6 +88,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/allowed",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/allowed",
+    },
+  })
   async listAllowed(request: Request, response: Response, next: NextFunction) {
     try {
       const agents = await agentUsersRepository.listAgentsByUserId(request.user!.id);
@@ -62,6 +114,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug",
+    },
+  })
   async getBySlug(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -75,6 +144,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents/create",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents/create",
+    },
+  })
   async create(request: Request, response: Response, next: NextFunction) {
     const parsed = createAgentSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -92,6 +178,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "PUT",
+      route: "/agents/:slug",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "PUT",
+      route: "/agents/:slug",
+    },
+  })
   async update(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     const parsed = updateAgentSchema.safeParse(request.body);
@@ -113,6 +216,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug",
+    },
+  })
   async remove(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -126,6 +246,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/tools",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/tools",
+    },
+  })
   async listTools(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -140,6 +277,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/tools",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/tools",
+    },
+  })
   async linkTools(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     const parsed = linkToolsSchema.safeParse(request.body);
@@ -162,6 +316,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/tools/:toolId",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/tools/:toolId",
+    },
+  })
   async unlinkTool(request: Request, response: Response, next: NextFunction) {
     const { slug, toolId } = request.params as { slug: string; toolId: string };
     try {
@@ -179,6 +350,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/mcps",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/mcps",
+    },
+  })
   async listMcps(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -193,6 +381,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/mcps",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/mcps",
+    },
+  })
   async linkMcps(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     const parsed = linkMcpsSchema.safeParse(request.body);
@@ -215,6 +420,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/mcps/:mcpId",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/mcps/:mcpId",
+    },
+  })
   async unlinkMcp(request: Request, response: Response, next: NextFunction) {
     const { slug, mcpId } = request.params as { slug: string; mcpId: string };
     try {
@@ -232,6 +454,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/users",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/users",
+    },
+  })
   async listUsers(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -246,6 +485,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/users",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/users",
+    },
+  })
   async linkUsers(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     const parsed = linkUsersSchema.safeParse(request.body);
@@ -268,6 +524,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/users/:userId",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/users/:userId",
+    },
+  })
   async unlinkUser(request: Request, response: Response, next: NextFunction) {
     const { slug, userId } = request.params as { slug: string; userId: string };
     try {
@@ -282,6 +555,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/skills",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/skills",
+    },
+  })
   async listSkills(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -296,6 +586,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/skills",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/skills",
+    },
+  })
   async linkSkills(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     const parsed = linkSkillsSchema.safeParse(request.body);
@@ -318,6 +625,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/skills/:skillId",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/skills/:skillId",
+    },
+  })
   async unlinkSkill(request: Request, response: Response, next: NextFunction) {
     const { slug, skillId } = request.params as { slug: string; skillId: string };
     try {
@@ -335,6 +659,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/api-key",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/agents/:slug/api-key",
+    },
+  })
   async generateApiKey(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {
@@ -349,6 +690,23 @@ export class AgentsController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/api-key",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/agents/:slug/api-key",
+    },
+  })
   async revokeApiKey(request: Request, response: Response, next: NextFunction) {
     const { slug } = request.params as { slug: string };
     try {

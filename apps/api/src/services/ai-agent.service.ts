@@ -16,6 +16,7 @@ import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { getToolsAvailable } from "../tools/toolManager";
+import { track } from "../lib/metrics";
 
 export interface AiAgentParams {
     agentSlug: string,
@@ -38,6 +39,7 @@ class AiAgentService {
     }
 
     private async executeGuardRail(input: string, rules: string) {
+
         const evaluationPrompt = `
           You are a security guardrail. Your task is to analyze the following AI response for safety infractions, hate speech, leakage of credentials, or malicious behavior.
               
@@ -177,9 +179,23 @@ class AiAgentService {
         }
 
         if (agentBySlug.guardrailEnabled) {
-            const response = await this.executeGuardRail(
-                params.input, agentBySlug.guardrailRules as string
-            )
+            const response = await track({
+                name: "guardrail_duration",
+                help: "The Guardrail duration",
+                type: "histogram",
+                labels: {
+                    status: "success",
+                    agentName: agentBySlug.slug,
+                    agentId: agentBySlug.id
+                }
+            }, () => {
+                return this.executeGuardRail(
+                    params.input, agentBySlug.guardrailRules as string
+                )
+            })
+            // const response = await this.executeGuardRail(
+            //     params.input, agentBySlug.guardrailRules as string
+            // )
             if (response != null) {
                 return response
             }
@@ -192,14 +208,39 @@ class AiAgentService {
         )
 
         if (agentBySlug.hasRagEnabled) {
-            const context = await this.getDataFromRag(agentBySlug.ragDataStoreId as string, params)
+            const context = await track({
+                name: "rag_query_duration",
+                help: "The rag query duration",
+                type: "histogram",
+                labels: {
+                    status: "success",
+                    agentName: agentBySlug.slug,
+                    agentId: agentBySlug.id
+                }
+            }, () => {
+                return this.getDataFromRag(agentBySlug.ragDataStoreId as string, params)
+            })
+            // const context = await this.getDataFromRag(agentBySlug.ragDataStoreId as string, params)
             agentBySlug.systemPrompt += `\n\nRAG CONTEXT TO USE ANSWER THE QUESTIONS: ${context}`;
         }
 
-        const agentsSkills = await this.agentSkillsRepository.listAgentSkills(agentBySlug.id)
+        const agentsSkills = await track({
+            name: "get_skills_duration",
+            help: "The ger skills query duration",
+            type: "histogram",
+            labels: {
+                status: "success",
+                agentName: agentBySlug.slug,
+                agentId: agentBySlug.id
+            }
+        }, () => {
+            return this.agentSkillsRepository.listAgentSkills(agentBySlug.id)
+        })
+
+        // const agentsSkills = await this.agentSkillsRepository.listAgentSkills(agentBySlug.id)
         if (agentsSkills.length > 0) {
             agentBySlug.systemPrompt += `\n\nSKILLS AVAILABLE TO USE:`
-            agentsSkills.forEach((skill) => {
+            agentsSkills.forEach((skill: { [key: string]: any }) => {
                 agentBySlug.systemPrompt += `\n\nSkill id:\n${skill.content} | name:\n${skill.name} | description:\n${skill.content}`
             })
 
@@ -217,69 +258,82 @@ class AiAgentService {
         });
 
         let outputText = ""
-        try {
-            const agent = await createToolCallingAgent({
-                llm: model,
-                tools,
-                prompt: this.buildPrompt(agentBySlug.systemPrompt as string),
-            });
 
-            const executor = new AgentExecutor({
-                agent,
-                tools,
-                verbose: false,
-                handleParsingErrors: (e) => `Error: ${e.message}. Please try again with valid input.`,
-            });
-
-            const result = await executor.invoke({
-                input: params.input,
-                returnIntermediateSteps: true,
-                chat_history: this.toLangChainHistory(params.history),
-            });
-
-            outputText = this.normalizeJsonOutput(result.output);
-
-            let parsed;
-            try {
-                parsed = JSON.parse(outputText);
-            } catch (error) {
-                parsed = outputText
+        return track({
+            name: "agent_execution_duration",
+            help: "The agent execution duration",
+            type: "histogram",
+            labels: {
+                status: "success",
+                agentName: agentBySlug.slug,
+                agentId: agentBySlug.id
             }
+        }, async () => {
+            try {
+                const agent = await createToolCallingAgent({
+                    llm: model,
+                    tools,
+                    prompt: this.buildPrompt(agentBySlug.systemPrompt as string),
+                });
 
-            if (typeof parsed === "string") {
+                const executor = new AgentExecutor({
+                    agent,
+                    tools,
+                    verbose: false,
+                    handleParsingErrors: (e) => `Error: ${e.message}. Please try again with valid input.`,
+                });
+
+                const result = await executor.invoke({
+                    input: params.input,
+                    returnIntermediateSteps: true,
+                    chat_history: this.toLangChainHistory(params.history),
+                });
+
+                outputText = this.normalizeJsonOutput(result.output);
+
+                let parsed;
+                try {
+                    parsed = JSON.parse(outputText);
+                } catch (error) {
+                    parsed = outputText
+                }
+
+                if (typeof parsed === "string") {
+                    return {
+                        queries: [],
+                        actions: [],
+                        message: parsed,
+                        metadata: {
+                            timestamp: new Date().toISOString(),
+                            model: config.openaiModel,
+                        },
+                    };
+                }
+
                 return {
-                    queries: [],
-                    actions: [],
-                    message: parsed,
+                    ...parsed,
+                    queries: parsed.queries.length > 0 ? parsed.queries : [],
+                    actions: actions,
+                    metadata: {
+                        timestamp: new Date().toISOString(),
+                        model: config.openaiModel,
+                    },
+                };
+            } catch (err) {
+                return {
+                    message: outputText || "Agent completed without a structured response.",
+                    queries: latestListedQueries,
+                    actions,
+                    // @ts-ignore
+                    error: true,
                     metadata: {
                         timestamp: new Date().toISOString(),
                         model: config.openaiModel,
                     },
                 };
             }
+        })
 
-            return {
-                ...parsed,
-                queries: parsed.queries.length > 0 ? parsed.queries : [],
-                actions: actions,
-                metadata: {
-                    timestamp: new Date().toISOString(),
-                    model: config.openaiModel,
-                },
-            };
-        } catch (err) {
-            return {
-                message: outputText || "Agent completed without a structured response.",
-                queries: latestListedQueries,
-                actions,
-                // @ts-ignore
-                error: true,
-                metadata: {
-                    timestamp: new Date().toISOString(),
-                    model: config.openaiModel,
-                },
-            };
-        }
     }
 }
 

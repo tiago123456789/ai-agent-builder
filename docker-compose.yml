@@ -1,12 +1,12 @@
 services:
   api:
-    build: ./apps/api
+    build: 
+      context: ./apps/api
     env_file: ./apps/api/.env
     ports:
       - "3001:3001"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
 
   web:
     build:
@@ -17,3 +17,36 @@ services:
       - "5173:80"
     depends_on:
       - api
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:9.5.15
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "4000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER={user_name_here}
+      - GF_SECURITY_ADMIN_PASSWORD={user_password_here}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "3000" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { Metric, MetricHistogram } from "../lib/metrics";
 import { config } from "../config";
 
 const OPENAI_API_BASE = "https://api.openai.com/v1";
@@ -39,6 +40,23 @@ function isChatModel(id: string): boolean {
 }
 
 export class ModelsController {
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/models",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/models",
+    },
+  })
   async list(_request: Request, response: Response, next: NextFunction) {
     if (!config.openaiApiKey) {
       return response.json([]);

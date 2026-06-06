@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { Metric, MetricHistogram } from "../lib/metrics";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { PGVectorStore } from "@langchain/community/vectorstores/pgvector";
 import { ragDataStoresRepository } from "../repository/rag-data-stores";
@@ -10,6 +11,23 @@ import {
 } from "../validations/rag-data-stores";
 
 export class RagDataStoresController {
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/rag-data-stores",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/rag-data-stores",
+    },
+  })
   async list(_req: Request, res: Response, next: NextFunction) {
     try {
       const stores = await ragDataStoresRepository.listRagDataStores();
@@ -19,6 +37,23 @@ export class RagDataStoresController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/rag-data-stores",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/rag-data-stores",
+    },
+  })
   async create(req: Request, res: Response, next: NextFunction) {
     const parsed = createRagDataStoreSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -40,6 +75,23 @@ export class RagDataStoresController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "POST",
+      route: "/rag-data-stores/:id/documents",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "POST",
+      route: "/rag-data-stores/:id/documents",
+    },
+  })
   async addDocument(req: Request, res: Response, next: NextFunction) {
     const parsed = addDocumentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -96,6 +148,23 @@ export class RagDataStoresController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/rag-data-stores/:id/search",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/rag-data-stores/:id/search",
+    },
+  })
   async search(req: Request, res: Response, next: NextFunction) {
     const { id } = req.params as { id: string };
     const query = (req.query.q as string) || "";
@@ -152,6 +221,23 @@ export class RagDataStoresController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "PUT",
+      route: "/rag-data-stores/:id/documents/:docId",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "PUT",
+      route: "/rag-data-stores/:id/documents/:docId",
+    },
+  })
   async updateDocument(req: Request, res: Response, next: NextFunction) {
     const parsed = updateDocumentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -208,6 +294,23 @@ export class RagDataStoresController {
     }
   }
 
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "DELETE",
+      route: "/rag-data-stores/:id/documents/:docId",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "DELETE",
+      route: "/rag-data-stores/:id/documents/:docId",
+    },
+  })
   async deleteDocument(req: Request, res: Response, next: NextFunction) {
     const { id, docId } = req.params as { id: string; docId: string };
 
