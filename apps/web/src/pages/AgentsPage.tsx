@@ -18,6 +18,9 @@ export function AgentsPage() {
   const [formRagStoreId, setFormRagStoreId] = useState("");
   const [formGuardrailEnabled, setFormGuardrailEnabled] = useState(false);
   const [formGuardrailRules, setFormGuardrailRules] = useState("");
+  const [formTracingEnabled, setFormTracingEnabled] = useState(false);
+  const [formTracingUrl, setFormTracingUrl] = useState("");
+  const [formTracingAigatewayId, setFormTracingAigatewayId] = useState("");
   const [formModel, setFormModel] = useState("gpt-4.1-mini");
   const [formTemperature, setFormTemperature] = useState(0.2);
   const [ragDataStores, setRagDataStores] = useState<RagDataStore[]>([]);
@@ -82,6 +85,9 @@ export function AgentsPage() {
     setFormRagStoreId("");
     setFormGuardrailEnabled(false);
     setFormGuardrailRules("");
+    setFormTracingEnabled(false);
+    setFormTracingUrl("");
+    setFormTracingAigatewayId("");
     setFormModel("gpt-4.1-mini");
     setFormTemperature(0.2);
     setRagDataStores([]);
@@ -108,6 +114,9 @@ export function AgentsPage() {
     setFormRagStoreId(agent.ragDataStoreId ?? "");
     setFormGuardrailEnabled(agent.guardrailEnabled);
     setFormGuardrailRules(agent.guardrailRules ?? "");
+    setFormTracingEnabled(agent.tracingEnabled);
+    setFormTracingUrl(agent.tracingUrl ?? "");
+    setFormTracingAigatewayId(agent.tracingAigatewayId ?? "");
     setFormModel(agent.model);
     setFormTemperature(agent.temperature);
     setRagDataStores([]);
@@ -135,6 +144,9 @@ export function AgentsPage() {
     setFormRagStoreId("");
     setFormGuardrailEnabled(false);
     setFormGuardrailRules("");
+    setFormTracingEnabled(false);
+    setFormTracingUrl("");
+    setFormTracingAigatewayId("");
     setFormModel("gpt-4.1-mini");
     setFormTemperature(0.2);
     setRagDataStores([]);
@@ -157,6 +169,9 @@ export function AgentsPage() {
             ragDataStoreId: formHasRag ? formRagStoreId || null : null,
             guardrailEnabled: formGuardrailEnabled,
             guardrailRules: formGuardrailEnabled ? formGuardrailRules.trim() || null : null,
+            tracingEnabled: formTracingEnabled,
+            tracingUrl: formTracingEnabled ? formTracingUrl.trim() || null : null,
+            tracingAigatewayId: formTracingEnabled ? formTracingAigatewayId.trim() || null : null,
             model: formModel.trim() || "gpt-4.1-mini",
             temperature: formTemperature,
           },
@@ -171,6 +186,9 @@ export function AgentsPage() {
             ragDataStoreId: formHasRag ? formRagStoreId || undefined : undefined,
             guardrailEnabled: formGuardrailEnabled,
             guardrailRules: formGuardrailEnabled ? formGuardrailRules.trim() || undefined : undefined,
+            tracingEnabled: formTracingEnabled,
+            tracingUrl: formTracingEnabled ? formTracingUrl.trim() || undefined : undefined,
+            tracingAigatewayId: formTracingEnabled ? formTracingAigatewayId.trim() || undefined : undefined,
             model: formModel.trim() || "gpt-4.1-mini",
             temperature: formTemperature,
           },
@@ -526,6 +544,38 @@ export function AgentsPage() {
                       rows={4}
                     />
                   </label>
+              )}
+              <label className="toggle-label">
+                <span>Enable Tracing</span>
+                <div
+                  className={`toggle-root ${formTracingEnabled ? "toggle-on" : "toggle-off"}`}
+                  onClick={() => setFormTracingEnabled((prev) => !prev)}
+                  role="switch"
+                  aria-checked={formTracingEnabled}
+                  tabIndex={0}
+                >
+                  <div className="toggle-thumb" />
+                </div>
+              </label>
+              {formTracingEnabled && (
+                <>
+                  <label>
+                    Tracing URL
+                    <input
+                      value={formTracingUrl}
+                      onChange={(e) => setFormTracingUrl(e.target.value)}
+                      placeholder="http://localhost:5000/gateway/mlflow/v1"
+                    />
+                  </label>
+                  <label>
+                    AI Gateway ID
+                    <input
+                      value={formTracingAigatewayId}
+                      onChange={(e) => setFormTracingAigatewayId(e.target.value)}
+                      placeholder="aigateway-id"
+                    />
+                  </label>
+                </>
               )}
               <label>
                 Model

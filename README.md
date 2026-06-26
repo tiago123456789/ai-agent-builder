@@ -20,7 +20,7 @@ can set the agents for specific employees.
    - [x] Update RAG's data 
 - [x] Create and set Skills to the agents you consider import to access the skill.
 - [x] Admin panel
-
+- [x] Track token cost, total requests, avg tokens per requests and track the user messages to the agents. PS: using MLflow for tracing.
 
 Monorepo with:
 
@@ -279,4 +279,29 @@ When the API processes a chat request, `apps/api/src/tools/toolManager.ts` loads
 - If `isNative` is `false`, the package is dynamically imported via `import(tool.package)` and its default export is called with the `actions` array.
 
 The `actions` array tracks what each tool did during execution, enabling the dashboard to display execution logs.
+
+## MLflow Tracing
+
+The platform supports tracing AI agent interactions with MLflow to monitor token costs, total requests, average tokens per request, and conversation history.
+
+### Enabling Tracing for an Agent
+
+1. Navigate to **/agents** and create or edit an agent
+2. Enable the **Enable Tracing** toggle
+3. Set **Tracing URL**:
+   - Docker environment: `http://mlflow:5000/gateway/mlflow/v1` (when running via `docker compose up`)
+   - Local development: the URL where your MLflow Gateway is exposed
+4. Set **AI Gateway ID** to the name of the AI Gateway created on your MLflow platform (e.g. the gateway deployment name)
+5. Save the agent
+
+### Accessing MLflow Dashboard
+
+1. Open [http://localhost:5000](http://localhost:5000) in your browser
+2. Default credentials:
+   - Login: `admin`
+   - Password: `password123`
+
+### Docker Setup
+
+When using Docker Compose, MLflow is automatically started as part of the stack. The tracing URL `http://mlflow:5000/gateway/mlflow/v1` resolves via the internal Docker network.
 

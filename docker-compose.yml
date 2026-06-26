@@ -7,6 +7,8 @@ services:
       - "3001:3001"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+     - app-network
 
   web:
     build:
@@ -17,6 +19,10 @@ services:
       - "5173:80"
     depends_on:
       - api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+     - app-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -31,6 +37,8 @@ services:
       - api
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+     - app-network
 
   grafana:
     image: grafana/grafana:9.5.15
@@ -50,3 +58,33 @@ services:
       test: [ "CMD", "nc", "-z", "localhost", "3000" ]
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+     - app-network
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow
+    ports:
+      - "5000:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - MLFLOW_FLASK_SERVER_SECRET_KEY=ff29359abc659870d3e3a338c20b16d5cd9ade8d4bb632355f63d6dcc9676cb1
+    volumes:
+      - mlflow_data:/mlflow
+    command: >
+      mlflow server 
+      --host 0.0.0.0 
+      --port 5000 
+      --allowed-hosts "mlflow:5000,localhost:*"
+      --backend-store-uri sqlite:////mlflow/mlflow.db 
+      --default-artifact-root /mlflow/artifacts 
+      --app-name basic-auth
+    networks:
+     - app-network
+
+volumes:
+  mlflow_data:
+
+networks:
+  app-network:
+    driver: bridge

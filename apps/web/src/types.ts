@@ -63,6 +63,9 @@ export type Agent = {
   ragDataStoreId: string | null;
   guardrailEnabled: boolean;
   guardrailRules: string | null;
+  tracingEnabled: boolean;
+  tracingUrl: string | null;
+  tracingAigatewayId: string | null;
   model: string;
   temperature: number;
   apiKey: string | null;

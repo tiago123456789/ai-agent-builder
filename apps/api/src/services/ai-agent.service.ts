@@ -55,7 +55,7 @@ class AiAgentService {
         try {
             const evaluatorModel = new ChatOpenAI({
                 model: "gpt-4o-mini",
-                temperature: 0.0
+                temperature: 0.0,
             });
 
             const evalResult = await evaluatorModel.invoke(evaluationPrompt);
@@ -173,6 +173,7 @@ class AiAgentService {
             throw new Error("OPENAI_API_KEY is not configured.");
         }
 
+
         const agentBySlug = await this.agentRepository.getAgentBySlug(params.agentSlug)
         if (!agentBySlug) {
             throw new Error("Agent not found.");
@@ -193,9 +194,6 @@ class AiAgentService {
                     params.input, agentBySlug.guardrailRules as string
                 )
             })
-            // const response = await this.executeGuardRail(
-            //     params.input, agentBySlug.guardrailRules as string
-            // )
             if (response != null) {
                 return response
             }
@@ -220,7 +218,6 @@ class AiAgentService {
             }, () => {
                 return this.getDataFromRag(agentBySlug.ragDataStoreId as string, params)
             })
-            // const context = await this.getDataFromRag(agentBySlug.ragDataStoreId as string, params)
             agentBySlug.systemPrompt += `\n\nRAG CONTEXT TO USE ANSWER THE QUESTIONS: ${context}`;
         }
 
@@ -237,7 +234,6 @@ class AiAgentService {
             return this.agentSkillsRepository.listAgentSkills(agentBySlug.id)
         })
 
-        // const agentsSkills = await this.agentSkillsRepository.listAgentSkills(agentBySlug.id)
         if (agentsSkills.length > 0) {
             agentBySlug.systemPrompt += `\n\nSKILLS AVAILABLE TO USE:`
             agentsSkills.forEach((skill: { [key: string]: any }) => {
@@ -250,12 +246,30 @@ class AiAgentService {
 
         agentBySlug.systemPrompt = agentBySlug.systemPrompt.replaceAll("{", "{{").replaceAll("}", "}}")
 
+        const token = Buffer.from(
+            `${process.env.MLFLOW_USERNAME}:${process.env.MLFLOW_PASWORD}`
+        ).toString("base64");
+
         let latestListedQueries: SavedQuery[] = []
-        const model = new ChatOpenAI({
+
+        const defaultOptions: {[key:string]: any } = {
             apiKey: config.openaiApiKey,
             model: agentBySlug.model,
             temperature: agentBySlug.temperature,
-        });
+        }
+
+        if (agentBySlug.tracingEnabled) {
+            defaultOptions.configuration = {
+                baseURL: agentBySlug.tracingUrl,
+                defaultHeaders: {
+                    "Authorization": `Basic ${token}`,
+                },
+            }
+
+            defaultOptions.model = agentBySlug.tracingAigatewayId
+        }
+
+        const model = new ChatOpenAI(defaultOptions);
 
         let outputText = ""
 

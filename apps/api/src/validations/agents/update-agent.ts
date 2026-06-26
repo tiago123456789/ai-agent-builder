@@ -7,6 +7,9 @@ export const updateAgentSchema = z.object({
   ragDataStoreId: z.string().nullable().optional(),
   guardrailEnabled: z.boolean().optional(),
   guardrailRules: z.string().nullable().optional(),
+  tracingEnabled: z.boolean().optional(),
+  tracingUrl: z.string().nullable().optional(),
+  tracingAigatewayId: z.string().nullable().optional(),
   model: z.string().max(150).optional(),
   temperature: z.number().min(0).max(1).optional(),
 });
