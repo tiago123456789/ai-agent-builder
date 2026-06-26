@@ -14,6 +14,9 @@ export class AgentsRepository {
       ragDataStoreId: row.rag_data_store_id ?? null,
       guardrailEnabled: row.guardrail_enabled ?? false,
       guardrailRules: row.guardrail_rules ?? null,
+      tracingEnabled: row.tracing_enabled ?? false,
+      tracingUrl: row.tracing_url ?? null,
+      tracingAigatewayId: row.tracing_aigateway_id ?? null,
       model: row.model ?? "gpt-4.1-mini",
       temperature: Number(row.temperature ?? 0.2),
       apiKey: row.api_key ?? null,
@@ -58,6 +61,9 @@ export class AgentsRepository {
     ragDataStoreId?: string | null;
     guardrailEnabled?: boolean;
     guardrailRules?: string | null;
+    tracingEnabled?: boolean;
+    tracingUrl?: string | null;
+    tracingAigatewayId?: string | null;
     model?: string;
     temperature?: number;
   }): Promise<Agent> {
@@ -71,6 +77,9 @@ export class AgentsRepository {
         rag_data_store_id: data.ragDataStoreId ?? null,
         guardrail_enabled: data.guardrailEnabled ?? false,
         guardrail_rules: data.guardrailRules ?? null,
+        tracing_enabled: data.tracingEnabled ?? false,
+        tracing_url: data.tracingUrl ?? null,
+        tracing_aigateway_id: data.tracingAigatewayId ?? null,
         model: data.model ?? "gpt-4.1-mini",
         temperature: data.temperature ?? 0.2,
       })
@@ -80,7 +89,7 @@ export class AgentsRepository {
 
   async updateAgent(
     slug: string,
-    data: { name?: string; systemPrompt?: string; hasRagEnabled?: boolean; ragDataStoreId?: string | null; guardrailEnabled?: boolean; guardrailRules?: string | null; model?: string; temperature?: number },
+    data: { name?: string; systemPrompt?: string; hasRagEnabled?: boolean; ragDataStoreId?: string | null; guardrailEnabled?: boolean; guardrailRules?: string | null; tracingEnabled?: boolean; tracingUrl?: string | null; tracingAigatewayId?: string | null; model?: string; temperature?: number },
   ): Promise<Agent | null> {
     const update: Record<string, any> = {};
     if (data.name !== undefined) {
@@ -101,6 +110,15 @@ export class AgentsRepository {
     }
     if (data.guardrailRules !== undefined) {
       update.guardrail_rules = data.guardrailRules;
+    }
+    if (data.tracingEnabled !== undefined) {
+      update.tracing_enabled = data.tracingEnabled;
+    }
+    if (data.tracingUrl !== undefined) {
+      update.tracing_url = data.tracingUrl;
+    }
+    if (data.tracingAigatewayId !== undefined) {
+      update.tracing_aigateway_id = data.tracingAigatewayId;
     }
     if (data.model !== undefined) {
       update.model = data.model;

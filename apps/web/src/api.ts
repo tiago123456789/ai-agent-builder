@@ -70,7 +70,7 @@ export function listAgents(token: string) {
 }
 
 export function createAgent(
-  data: { name: string; systemPrompt: string; hasRagEnabled?: boolean; ragDataStoreId?: string; guardrailEnabled?: boolean; guardrailRules?: string; model?: string; temperature?: number },
+  data: { name: string; systemPrompt: string; hasRagEnabled?: boolean; ragDataStoreId?: string; guardrailEnabled?: boolean; guardrailRules?: string; tracingEnabled?: boolean; tracingUrl?: string; tracingAigatewayId?: string; model?: string; temperature?: number },
   token: string,
 ) {
   return request<{ agent: Agent }>("/agents/create", {
@@ -82,7 +82,7 @@ export function createAgent(
 
 export function updateAgent(
   slug: string,
-  data: { name?: string; systemPrompt?: string; hasRagEnabled?: boolean; ragDataStoreId?: string | null; guardrailEnabled?: boolean; guardrailRules?: string | null; model?: string; temperature?: number },
+  data: { name?: string; systemPrompt?: string; hasRagEnabled?: boolean; ragDataStoreId?: string | null; guardrailEnabled?: boolean; guardrailRules?: string | null; tracingEnabled?: boolean; tracingUrl?: string | null; tracingAigatewayId?: string | null; model?: string; temperature?: number },
   token: string,
 ) {
   return request<{ agent: Agent }>(`/agents/${slug}`, {
