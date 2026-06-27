@@ -6,8 +6,12 @@ export class McpsRepository {
     return {
       id: row.id,
       description: row.description ?? null,
-      url: row.url,
+      url: row.url ?? null,
       headers: row.headers ?? null,
+      type: row.type ?? "remote",
+      command: row.command ?? null,
+      args: row.args ?? null,
+      envs: row.envs ?? null,
       createdAt: row.created_at,
     };
   }
@@ -19,14 +23,22 @@ export class McpsRepository {
 
   async createMcp(data: {
     description?: string;
-    url: string;
+    url?: string;
     headers?: Record<string, string>;
+    type: "remote" | "stdio";
+    command?: string;
+    args?: string;
+    envs?: string;
   }): Promise<Mcp> {
     const [row] = await db("mcps")
       .insert({
         description: data.description ?? null,
-        url: data.url,
+        url: data.url ?? "null",
         headers: data.headers ?? null,
+        type: data.type,
+        command: data.command ?? null,
+        args: data.args ?? null,
+        envs: data.envs ?? null,
       })
       .returning("*");
     return this.rowToMcp(row);

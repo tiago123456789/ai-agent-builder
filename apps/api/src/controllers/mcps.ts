@@ -58,10 +58,13 @@ export class McpsController {
     }
 
     try {
-      parsed.data.headers = new Encrypter().encrypt(
-        JSON.stringify(parsed.data.headers),
-      ) as unknown as Record<string, string> | undefined;
-      const mcp = await mcpsRepository.createMcp(parsed.data);
+      const data = parsed.data;
+      if (data.type === "remote" && data.headers) {
+        data.headers = new Encrypter().encrypt(
+          JSON.stringify(data.headers),
+        ) as unknown as Record<string, string> | undefined;
+      }
+      const mcp = await mcpsRepository.createMcp(data);
       response.status(201).json({ mcp });
     } catch (error) {
       next(error);

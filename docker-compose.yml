@@ -3,6 +3,8 @@ services:
     build: 
       context: ./apps/api
     env_file: ./apps/api/.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "3001:3001"
     extra_hosts:

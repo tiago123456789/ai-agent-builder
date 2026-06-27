@@ -42,8 +42,12 @@ export type AgentTool = {
 export type Mcp = {
   id: string;
   description: string | null;
-  url: string;
+  url: string | null;
   headers: Record<string, string> | null;
+  type: "remote" | "stdio";
+  command: string | null;
+  args: string | null;
+  envs: string | null;
   createdAt: string;
 };
 
