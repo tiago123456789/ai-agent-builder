@@ -206,7 +206,7 @@ export function listMcps(token: string) {
 }
 
 export function createMcp(
-  data: { description?: string; url: string; headers?: Record<string, string> },
+  data: { description?: string; url?: string; headers?: Record<string, string>; type: "remote" | "stdio"; command?: string; args?: string; envs?: string },
   token: string,
 ) {
   return request<{ mcp: Mcp }>("/mcps", {

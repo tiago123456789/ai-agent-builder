@@ -6,8 +6,12 @@ export class AgentMcpRepository {
     return {
       id: row.id,
       description: row.description ?? null,
-      url: row.url,
+      url: row.url ?? null,
       headers: row.headers ?? null,
+      type: row.type ?? "remote",
+      command: row.command ?? null,
+      args: row.args ?? null,
+      envs: row.envs ?? null,
       createdAt: row.created_at,
     };
   }
