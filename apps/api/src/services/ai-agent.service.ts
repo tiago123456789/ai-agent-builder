@@ -17,6 +17,22 @@ import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { getToolsAvailable } from "../tools/toolManager";
 import { track } from "../lib/metrics";
+import { SemanticCache } from "@upstash/semantic-cache";
+import { Index } from "@upstash/vector";
+
+let semanticCache: SemanticCache | null = null;
+
+if (config.upstashCacheUrl && config.upstashCacheToken) {
+    const index = new Index({
+        url: config.upstashCacheUrl,
+        token: config.upstashCacheToken,
+    });
+
+    semanticCache = new SemanticCache({
+        index,
+        minProximity: 0.85,
+    });
+}
 
 export interface AiAgentParams {
     agentSlug: string,
@@ -199,6 +215,56 @@ class AiAgentService {
             }
         }
 
+        if (agentBySlug.hasSemanticCache && semanticCache) {
+            const cacheKey = `${agentBySlug.slug}:${params.input}`;
+            const cachedResult = await track({
+                name: "get_semantic_cache_duration",
+                help: "The get semantic cache duration",
+                type: "histogram",
+                labels: {
+                    status: "success",
+                    agentName: agentBySlug.slug,
+                    agentId: agentBySlug.id
+                }
+            }, () => {
+                return semanticCache.get(cacheKey);
+            })
+            if (cachedResult) {
+                await track({
+                    name: "total_user_queries_semantic_cache_hitted",
+                    help: "The total user queries semantic cache hitted",
+                    type: "counter",
+                    labels: {
+                        status: "success",
+                        agentName: agentBySlug.slug,
+                        agentId: agentBySlug.id
+                    }
+                }, () => { return; })
+
+                try {
+                    const parsed = JSON.parse(cachedResult);
+                    return {
+                        ...parsed,
+                        metadata: {
+                            ...parsed.metadata,
+                            cached: true,
+                        },
+                    } as AgentResponse;
+                } catch {
+                    return {
+                        queries: [],
+                        actions: [],
+                        message: cachedResult,
+                        metadata: {
+                            timestamp: new Date().toISOString(),
+                            model: config.openaiModel,
+                            cached: true,
+                        },
+                    };
+                }
+            }
+        }
+
         const actions: AgentAction[] = []
         const tools = await this.toolManager.getToolsAvailable(agentBySlug.id, actions)
         agentBySlug.systemPrompt = agentBySlug.systemPrompt.replace(
@@ -252,7 +318,7 @@ class AiAgentService {
 
         let latestListedQueries: SavedQuery[] = []
 
-        const defaultOptions: {[key:string]: any } = {
+        const defaultOptions: { [key: string]: any } = {
             apiKey: config.openaiApiKey,
             model: agentBySlug.model,
             temperature: agentBySlug.temperature,
@@ -312,8 +378,10 @@ class AiAgentService {
                     parsed = outputText
                 }
 
+                let response: AgentResponse;
+
                 if (typeof parsed === "string") {
-                    return {
+                    response = {
                         queries: [],
                         actions: [],
                         message: parsed,
@@ -322,17 +390,24 @@ class AiAgentService {
                             model: config.openaiModel,
                         },
                     };
+                } else {
+                    response = {
+                        ...parsed,
+                        queries: parsed.queries.length > 0 ? parsed.queries : [],
+                        actions: actions,
+                        metadata: {
+                            timestamp: new Date().toISOString(),
+                            model: config.openaiModel,
+                        },
+                    };
                 }
 
-                return {
-                    ...parsed,
-                    queries: parsed.queries.length > 0 ? parsed.queries : [],
-                    actions: actions,
-                    metadata: {
-                        timestamp: new Date().toISOString(),
-                        model: config.openaiModel,
-                    },
-                };
+                if (agentBySlug.hasSemanticCache && semanticCache) {
+                    const cacheKey = `${agentBySlug.slug}:${params.input}`;
+                    await semanticCache.set(cacheKey, JSON.stringify(response));
+                }
+
+                return response;
             } catch (err) {
                 return {
                     message: outputText || "Agent completed without a structured response.",

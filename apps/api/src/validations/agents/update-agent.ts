@@ -10,6 +10,7 @@ export const updateAgentSchema = z.object({
   tracingEnabled: z.boolean().optional(),
   tracingUrl: z.string().nullable().optional(),
   tracingAigatewayId: z.string().nullable().optional(),
+  hasSemanticCache: z.boolean().optional(),
   model: z.string().max(150).optional(),
   temperature: z.number().min(0).max(1).optional(),
 });
