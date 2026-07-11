@@ -11,4 +11,6 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL,
   defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL,
   defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD,
+  upstashCacheUrl: process.env.UPSTASH_CACHE_URL ?? "",
+  upstashCacheToken: process.env.UPSTASH_CACHE_TOKEN ?? "",
 };
