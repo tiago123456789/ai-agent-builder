@@ -410,7 +410,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: var(--shadow);
-  z-index: 50;
+  z-index: 200;
   padding: 4px;
   margin-top: 4px;
   animation: fadeIn 100ms ease;
@@ -469,6 +469,16 @@ textarea {
 .badge-external {
   background: rgba(180, 35, 24, 0.1);
   color: var(--warn);
+}
+
+.badge-remote {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-strong);
+}
+
+.badge-stdio {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
 }
 
 .tool-identifier {

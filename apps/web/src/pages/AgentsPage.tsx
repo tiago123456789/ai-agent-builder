@@ -644,8 +644,9 @@ export function AgentsPage() {
                 <thead>
                   <tr>
                     <th></th>
+                    <th>Type</th>
                     <th>Description</th>
-                    <th>URL</th>
+                    <th>Endpoint</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -657,8 +658,9 @@ export function AgentsPage() {
                         <td>
                           <input type="checkbox" checked={isLinked} onChange={() => toggleMcp(mcp.id)} />
                         </td>
+                        <td><span className={`badge ${mcp.type === "stdio" ? "badge-stdio" : "badge-remote"}`}>{mcp.type}</span></td>
                         <td>{mcp.description ?? "-"}</td>
-                        <td><code>{mcp.url}</code></td>
+                        <td><code>{mcp.type === "remote" ? mcp.url : mcp.command}</code></td>
                         <td>
                           {isLinked && (
                             <button className="ghost-button warn small" onClick={() => handleUnlinkMcp(mcp.id)}>

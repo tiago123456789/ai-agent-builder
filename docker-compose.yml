@@ -10,19 +10,19 @@ services:
   #   networks:
   #    - app-network
 
-  web:
-    build:
-      context: ./apps/web
-      args:
-        VITE_API_URL: http://localhost:3001
-    ports:
-      - "5173:80"
-    # depends_on:
-    #   - api
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-     - app-network
+  # web:
+  #   build:
+  #     context: ./apps/web
+  #     args:
+  #       VITE_API_URL: http://localhost:3001
+  #   ports:
+  #     - "5173:80"
+  #   # depends_on:
+  #   #   - api
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   networks:
+  #    - app-network
 
   prometheus:
     image: prom/prometheus:latest

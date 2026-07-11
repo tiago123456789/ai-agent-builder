@@ -8,7 +8,7 @@
     "test": "bun test",
     "migrate": "bun run src/db/migrate.ts",
     "migrate:make": "bun knex migrate:make --knexfile knexfile.ts",
-    "migrate:rollback": "bun src/db/rollback.ts"
+    "migrate:rollback": "bun src/db/rollback.ts",
   },
   "dependencies": {
     "@langchain/community": "^1.1.29",

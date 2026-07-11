@@ -217,8 +217,30 @@ class AiAgentService {
 
         if (agentBySlug.hasSemanticCache && semanticCache) {
             const cacheKey = `${agentBySlug.slug}:${params.input}`;
-            const cachedResult = await semanticCache.get(cacheKey);
+            const cachedResult = await track({
+                name: "get_semantic_cache_duration",
+                help: "The get semantic cache duration",
+                type: "histogram",
+                labels: {
+                    status: "success",
+                    agentName: agentBySlug.slug,
+                    agentId: agentBySlug.id
+                }
+            }, () => {
+                return semanticCache.get(cacheKey);
+            })
             if (cachedResult) {
+                await track({
+                    name: "total_user_queries_semantic_cache_hitted",
+                    help: "The total user queries semantic cache hitted",
+                    type: "counter",
+                    labels: {
+                        status: "success",
+                        agentName: agentBySlug.slug,
+                        agentId: agentBySlug.id
+                    }
+                }, () => { return; })
+
                 try {
                     const parsed = JSON.parse(cachedResult);
                     return {
@@ -296,7 +318,7 @@ class AiAgentService {
 
         let latestListedQueries: SavedQuery[] = []
 
-        const defaultOptions: {[key:string]: any } = {
+        const defaultOptions: { [key: string]: any } = {
             apiKey: config.openaiApiKey,
             model: agentBySlug.model,
             temperature: agentBySlug.temperature,
