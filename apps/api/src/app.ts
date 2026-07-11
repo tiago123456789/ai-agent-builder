@@ -14,6 +14,10 @@ import { skillsRouter } from "./routes/skills";
 import { metricsRouter } from "./routes/metrics";
 import { agentsPublicRouter } from "./routes/agents-public";
 import { errorHandler } from "./middleware/error-handler";
+import VectorUpstashSemanticCacheAdapter from "./adapters/vector-upstash-semantic-cache.adapter";
+
+const SEMANTIC_CACHE_RESET_INTERVAL_MS = 5 * 60 * 60 * 1000;
+const vectorUpstashSemanticCacheAdapter = new VectorUpstashSemanticCacheAdapter()
 
 export function createApp() {
   const app = express();
@@ -40,5 +44,10 @@ export function createApp() {
 
   app.use(errorHandler);
 
+  setInterval(async () => {
+    console.log("Starting process to reset keys from semantic cache")
+    await vectorUpstashSemanticCacheAdapter.resetAllKeys()
+    console.log("Finished process to reset keys from semantic cache")
+  }, SEMANTIC_CACHE_RESET_INTERVAL_MS)
   return app;
 }

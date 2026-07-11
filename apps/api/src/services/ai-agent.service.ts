@@ -18,22 +18,8 @@ import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { getToolsAvailable } from "../tools/toolManager";
 import { track } from "../lib/metrics";
-import { SemanticCache } from "@upstash/semantic-cache";
-import { Index } from "@upstash/vector";
-
-let semanticCache: SemanticCache | null = null;
-
-if (config.upstashCacheUrl && config.upstashCacheToken) {
-    const index = new Index({
-        url: config.upstashCacheUrl,
-        token: config.upstashCacheToken,
-    });
-
-    semanticCache = new SemanticCache({
-        index,
-        minProximity: 0.85,
-    });
-}
+import type { ISemanticCacheAdapter } from "../adapters/semantic-cache.interface";
+import VectorUpstashSemanticCacheAdapter from "../adapters/vector-upstash-semantic-cache.adapter";
 
 export interface AiAgentParams {
     agentSlug: string,
@@ -53,6 +39,7 @@ class AiAgentService {
         private readonly toolManager: {
             getToolsAvailable: (agentId: string, actions: AgentAction[]) => Promise<DynamicStructuredTool[]>
         },
+        private readonly semanticCacheAdapter: ISemanticCacheAdapter = new VectorUpstashSemanticCacheAdapter(),
     ) {
 
     }
@@ -227,7 +214,7 @@ class AiAgentService {
             }
         }
 
-        if (agentBySlug.hasSemanticCache && semanticCache) {
+        if (agentBySlug.hasSemanticCache && this.semanticCacheAdapter.isAvailable()) {
             const cacheKey = `${agentBySlug.slug}:${params.input}`;
             const cachedResult = await track({
                 name: "get_semantic_cache_duration",
@@ -239,7 +226,7 @@ class AiAgentService {
                     agentId: agentBySlug.id
                 }
             }, () => {
-                return semanticCache.get(cacheKey);
+                return this.semanticCacheAdapter.get(cacheKey);
             })
             if (cachedResult) {
                 await track({
@@ -414,9 +401,9 @@ class AiAgentService {
                     };
                 }
 
-                if (agentBySlug.hasSemanticCache && semanticCache) {
+                if (agentBySlug.hasSemanticCache && this.semanticCacheAdapter.isAvailable()) {
                     const cacheKey = `${agentBySlug.slug}:${params.input}`;
-                    await semanticCache.set(cacheKey, JSON.stringify(response));
+                    await this.semanticCacheAdapter.set(cacheKey, JSON.stringify(response));
                 }
 
                 if (agentBySlug.hasPersistSessionMessage && params.sessionId) {
