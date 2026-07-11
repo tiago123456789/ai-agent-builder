@@ -12,6 +12,7 @@ import { RagDataStoresRepository } from "../repository/rag-data-stores";
 import Encrypter from "../lib/encrypter";
 import { PGVectorStore } from "@langchain/community/vectorstores/pgvector";
 import { AgentSkillsRepository } from "../repository/agents-skills";
+import { SessionMessagesRepository } from "../repository/session-messages";
 import { AgentExecutor, createToolCallingAgent } from "langchain/agents";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
@@ -38,6 +39,7 @@ export interface AiAgentParams {
     agentSlug: string,
     input: string,
     history: AgentChatMessage[],
+    sessionId?: string,
 }
 
 class AiAgentService {
@@ -46,6 +48,7 @@ class AiAgentService {
         private readonly agentRepository: AgentsRepository = new AgentsRepository(),
         private readonly ragDataStoresRepository: RagDataStoresRepository = new RagDataStoresRepository(),
         private readonly agentSkillsRepository: AgentSkillsRepository = new AgentSkillsRepository(),
+        private readonly sessionMessagesRepository: SessionMessagesRepository = new SessionMessagesRepository(),
         private readonly encrypter: Encrypter = new Encrypter(),
         private readonly toolManager: {
             getToolsAvailable: (agentId: string, actions: AgentAction[]) => Promise<DynamicStructuredTool[]>
@@ -193,6 +196,15 @@ class AiAgentService {
         const agentBySlug = await this.agentRepository.getAgentBySlug(params.agentSlug)
         if (!agentBySlug) {
             throw new Error("Agent not found.");
+        }
+
+        if (agentBySlug.hasPersistSessionMessage && params.sessionId && params.history.length <= 1) {
+            const currentUserMessage = params.history[0] || { role: "user", content: params.input };
+            const dbHistory = await this.sessionMessagesRepository.getHistoryBySessionAndAgent({
+                sessionId: params.sessionId,
+                agentId: agentBySlug.id,
+            });
+            params.history = [...dbHistory, currentUserMessage];
         }
 
         if (agentBySlug.guardrailEnabled) {
@@ -407,6 +419,21 @@ class AiAgentService {
                     await semanticCache.set(cacheKey, JSON.stringify(response));
                 }
 
+                if (agentBySlug.hasPersistSessionMessage && params.sessionId) {
+                    await this.sessionMessagesRepository.create({
+                        sessionId: params.sessionId,
+                        role: "user",
+                        content: params.input,
+                        agentId: agentBySlug.id,
+                    });
+                    await this.sessionMessagesRepository.create({
+                        sessionId: params.sessionId,
+                        role: "assistant",
+                        content: response.message,
+                        agentId: agentBySlug.id,
+                    });
+                }
+
                 return response;
             } catch (err) {
                 return {
@@ -432,6 +459,7 @@ export const aiAgentService = new AiAgentService(
     new AgentsRepository(),
     new RagDataStoresRepository(),
     new AgentSkillsRepository(),
+    new SessionMessagesRepository(),
     new Encrypter(),
     { getToolsAvailable }
 );
