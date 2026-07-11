@@ -1,28 +1,28 @@
 services:
-  # api:
-  #   build: 
-  #     context: ./apps/api
-  #   env_file: ./apps/api/.env
-  #   ports:
-  #     - "3001:3001"
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
-  #   networks:
-  #    - app-network
+  api:
+    build: 
+      context: ./apps/api
+    env_file: ./apps/api/.env
+    ports:
+      - "3001:3001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+     - app-network
 
-  # web:
-  #   build:
-  #     context: ./apps/web
-  #     args:
-  #       VITE_API_URL: http://localhost:3001
-  #   ports:
-  #     - "5173:80"
-  #   # depends_on:
-  #   #   - api
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
-  #   networks:
-  #    - app-network
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: http://localhost:3001
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+     - app-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -33,8 +33,8 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
-    # depends_on:
-    #   - api
+    depends_on:
+      - api
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
