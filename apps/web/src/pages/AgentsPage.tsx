@@ -21,6 +21,7 @@ export function AgentsPage() {
   const [formTracingEnabled, setFormTracingEnabled] = useState(false);
   const [formTracingUrl, setFormTracingUrl] = useState("");
   const [formTracingAigatewayId, setFormTracingAigatewayId] = useState("");
+  const [formHasSemanticCache, setFormHasSemanticCache] = useState(false);
   const [formModel, setFormModel] = useState("gpt-4.1-mini");
   const [formTemperature, setFormTemperature] = useState(0.2);
   const [ragDataStores, setRagDataStores] = useState<RagDataStore[]>([]);
@@ -88,6 +89,7 @@ export function AgentsPage() {
     setFormTracingEnabled(false);
     setFormTracingUrl("");
     setFormTracingAigatewayId("");
+    setFormHasSemanticCache(false);
     setFormModel("gpt-4.1-mini");
     setFormTemperature(0.2);
     setRagDataStores([]);
@@ -117,6 +119,7 @@ export function AgentsPage() {
     setFormTracingEnabled(agent.tracingEnabled);
     setFormTracingUrl(agent.tracingUrl ?? "");
     setFormTracingAigatewayId(agent.tracingAigatewayId ?? "");
+    setFormHasSemanticCache(agent.hasSemanticCache);
     setFormModel(agent.model);
     setFormTemperature(agent.temperature);
     setRagDataStores([]);
@@ -147,6 +150,7 @@ export function AgentsPage() {
     setFormTracingEnabled(false);
     setFormTracingUrl("");
     setFormTracingAigatewayId("");
+    setFormHasSemanticCache(false);
     setFormModel("gpt-4.1-mini");
     setFormTemperature(0.2);
     setRagDataStores([]);
@@ -172,6 +176,7 @@ export function AgentsPage() {
             tracingEnabled: formTracingEnabled,
             tracingUrl: formTracingEnabled ? formTracingUrl.trim() || null : null,
             tracingAigatewayId: formTracingEnabled ? formTracingAigatewayId.trim() || null : null,
+            hasSemanticCache: formHasSemanticCache,
             model: formModel.trim() || "gpt-4.1-mini",
             temperature: formTemperature,
           },
@@ -189,6 +194,7 @@ export function AgentsPage() {
             tracingEnabled: formTracingEnabled,
             tracingUrl: formTracingEnabled ? formTracingUrl.trim() || undefined : undefined,
             tracingAigatewayId: formTracingEnabled ? formTracingAigatewayId.trim() || undefined : undefined,
+            hasSemanticCache: formHasSemanticCache,
             model: formModel.trim() || "gpt-4.1-mini",
             temperature: formTemperature,
           },
@@ -577,6 +583,18 @@ export function AgentsPage() {
                   </label>
                 </>
               )}
+              <label className="toggle-label">
+                <span>Enable Semantic Cache</span>
+                <div
+                  className={`toggle-root ${formHasSemanticCache ? "toggle-on" : "toggle-off"}`}
+                  onClick={() => setFormHasSemanticCache((prev) => !prev)}
+                  role="switch"
+                  aria-checked={formHasSemanticCache}
+                  tabIndex={0}
+                >
+                  <div className="toggle-thumb" />
+                </div>
+              </label>
               <label>
                 Model
                 {models.length > 0 ? (
