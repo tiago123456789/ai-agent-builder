@@ -339,6 +339,7 @@ textarea {
 }
 
 .card {
+  position: relative;
   background: var(--surface);
   backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -400,11 +401,25 @@ textarea {
   gap: 6px;
 }
 
+.card-menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.card-menu .dropdown-trigger {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 10px;
+}
+
 .dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  left: 0;
   min-width: 180px;
   background: var(--surface-strong);
   border: 1px solid var(--line);

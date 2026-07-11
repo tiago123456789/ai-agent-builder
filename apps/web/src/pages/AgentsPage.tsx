@@ -22,6 +22,7 @@ export function AgentsPage() {
   const [formTracingUrl, setFormTracingUrl] = useState("");
   const [formTracingAigatewayId, setFormTracingAigatewayId] = useState("");
   const [formHasSemanticCache, setFormHasSemanticCache] = useState(false);
+  const [formHasPersistSessionMessage, setFormHasPersistSessionMessage] = useState(false);
   const [formModel, setFormModel] = useState("gpt-4.1-mini");
   const [formTemperature, setFormTemperature] = useState(0.2);
   const [ragDataStores, setRagDataStores] = useState<RagDataStore[]>([]);
@@ -90,6 +91,7 @@ export function AgentsPage() {
     setFormTracingUrl("");
     setFormTracingAigatewayId("");
     setFormHasSemanticCache(false);
+    setFormHasPersistSessionMessage(false);
     setFormModel("gpt-4.1-mini");
     setFormTemperature(0.2);
     setRagDataStores([]);
@@ -120,6 +122,7 @@ export function AgentsPage() {
     setFormTracingUrl(agent.tracingUrl ?? "");
     setFormTracingAigatewayId(agent.tracingAigatewayId ?? "");
     setFormHasSemanticCache(agent.hasSemanticCache);
+    setFormHasPersistSessionMessage(agent.hasPersistSessionMessage);
     setFormModel(agent.model);
     setFormTemperature(agent.temperature);
     setRagDataStores([]);
@@ -151,6 +154,7 @@ export function AgentsPage() {
     setFormTracingUrl("");
     setFormTracingAigatewayId("");
     setFormHasSemanticCache(false);
+    setFormHasPersistSessionMessage(false);
     setFormModel("gpt-4.1-mini");
     setFormTemperature(0.2);
     setRagDataStores([]);
@@ -177,6 +181,7 @@ export function AgentsPage() {
             tracingUrl: formTracingEnabled ? formTracingUrl.trim() || null : null,
             tracingAigatewayId: formTracingEnabled ? formTracingAigatewayId.trim() || null : null,
             hasSemanticCache: formHasSemanticCache,
+            hasPersistSessionMessage: formHasPersistSessionMessage,
             model: formModel.trim() || "gpt-4.1-mini",
             temperature: formTemperature,
           },
@@ -195,6 +200,7 @@ export function AgentsPage() {
             tracingUrl: formTracingEnabled ? formTracingUrl.trim() || undefined : undefined,
             tracingAigatewayId: formTracingEnabled ? formTracingAigatewayId.trim() || undefined : undefined,
             hasSemanticCache: formHasSemanticCache,
+            hasPersistSessionMessage: formHasPersistSessionMessage,
             model: formModel.trim() || "gpt-4.1-mini",
             temperature: formTemperature,
           },
@@ -435,52 +441,50 @@ export function AgentsPage() {
       ) : (
         <div className="card-grid">
           {agents.map((agent) => (
-            <div key={agent.id} className="card">
+            <div key={agent.id} className="card" style={{ marginBottom: "70px"}}>
+              <div className="card-menu">
+                <button
+                  className="ghost-button small dropdown-trigger"
+                  onClick={(e) => { e.stopPropagation(); toggleDropdown(agent.id); }}
+                >
+                  ⋮
+                </button>
+                {openDropdownId === agent.id && (
+                  <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); navigate(`/chats/agent/${agent.slug}`); }}>
+                      Chat
+                    </button>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openEditModal(agent); }}>
+                      Edit
+                    </button>
+                    <hr className="dropdown-divider" />
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openToolsModal(agent); }}>
+                      Tools
+                    </button>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openMcpsModal(agent); }}>
+                      MCPs
+                    </button>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openSkillsModal(agent); }}>
+                      Skills
+                    </button>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openUsersModal(agent); }}>
+                      Users
+                    </button>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openApiKeyModal(agent); }}>
+                      API Key
+                    </button>
+                    <hr className="dropdown-divider" />
+                    <button className="dropdown-item warn" onClick={() => { setOpenDropdownId(null); handleDelete(agent.slug); }}>
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="card-body">
                 <h3>{agent.name}</h3>
                 <span className="badge">{agent.slug}</span>
                 <p className="card-preview">{agent.systemPrompt.slice(0, 120)}{agent.systemPrompt.length > 120 ? "..." : ""}</p>
                 <small className="muted">Created {new Date(agent.createdAt).toLocaleDateString()}</small>
-              </div>
-              <div className="card-actions">
-                <div className="dropdown-container">
-                  <button
-                    className="ghost-button dropdown-trigger"
-                    onClick={(e) => { e.stopPropagation(); toggleDropdown(agent.id); }}
-                  >
-                    Actions ▾
-                  </button>
-                  {openDropdownId === agent.id && (
-                    <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); navigate(`/chats/agent/${agent.slug}`); }}>
-                        Chat
-                      </button>
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openEditModal(agent); }}>
-                        Edit
-                      </button>
-                      <hr className="dropdown-divider" />
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openToolsModal(agent); }}>
-                        Tools
-                      </button>
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openMcpsModal(agent); }}>
-                        MCPs
-                      </button>
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openSkillsModal(agent); }}>
-                        Skills
-                      </button>
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openUsersModal(agent); }}>
-                        Users
-                      </button>
-                      <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openApiKeyModal(agent); }}>
-                        API Key
-                      </button>
-                      <hr className="dropdown-divider" />
-                      <button className="dropdown-item warn" onClick={() => { setOpenDropdownId(null); handleDelete(agent.slug); }}>
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           ))}
@@ -590,6 +594,18 @@ export function AgentsPage() {
                   onClick={() => setFormHasSemanticCache((prev) => !prev)}
                   role="switch"
                   aria-checked={formHasSemanticCache}
+                  tabIndex={0}
+                >
+                  <div className="toggle-thumb" />
+                </div>
+              </label>
+              <label className="toggle-label">
+                <span>Persist Session Messages</span>
+                <div
+                  className={`toggle-root ${formHasPersistSessionMessage ? "toggle-on" : "toggle-off"}`}
+                  onClick={() => setFormHasPersistSessionMessage((prev) => !prev)}
+                  role="switch"
+                  aria-checked={formHasPersistSessionMessage}
                   tabIndex={0}
                 >
                   <div className="toggle-thumb" />

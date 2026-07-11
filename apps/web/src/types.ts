@@ -67,6 +67,7 @@ export type Agent = {
   tracingUrl: string | null;
   tracingAigatewayId: string | null;
   hasSemanticCache: boolean;
+  hasPersistSessionMessage: boolean;
   model: string;
   temperature: number;
   apiKey: string | null;

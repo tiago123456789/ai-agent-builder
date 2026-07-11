@@ -18,6 +18,7 @@ export class AgentsRepository {
       tracingUrl: row.tracing_url ?? null,
       tracingAigatewayId: row.tracing_aigateway_id ?? null,
       hasSemanticCache: row.has_semantic_cache ?? false,
+      hasPersistSessionMessage: row.has_persist_session_message ?? false,
       model: row.model ?? "gpt-4.1-mini",
       temperature: Number(row.temperature ?? 0.2),
       apiKey: row.api_key ?? null,
@@ -55,7 +56,7 @@ export class AgentsRepository {
       .select(["c.*"]);
   }
 
-  async createAgent(data: {
+  async createAgent(    data: {
     name: string;
     systemPrompt: string;
     hasRagEnabled?: boolean;
@@ -66,6 +67,7 @@ export class AgentsRepository {
     tracingUrl?: string | null;
     tracingAigatewayId?: string | null;
     hasSemanticCache?: boolean;
+    hasPersistSessionMessage?: boolean;
     model?: string;
     temperature?: number;
   }): Promise<Agent> {
@@ -83,6 +85,7 @@ export class AgentsRepository {
         tracing_url: data.tracingUrl ?? null,
         tracing_aigateway_id: data.tracingAigatewayId ?? null,
         has_semantic_cache: data.hasSemanticCache ?? false,
+        has_persist_session_message: data.hasPersistSessionMessage ?? false,
         model: data.model ?? "gpt-4.1-mini",
         temperature: data.temperature ?? 0.2,
       })
@@ -92,7 +95,7 @@ export class AgentsRepository {
 
   async updateAgent(
     slug: string,
-    data: { name?: string; systemPrompt?: string; hasRagEnabled?: boolean; ragDataStoreId?: string | null; guardrailEnabled?: boolean; guardrailRules?: string | null; tracingEnabled?: boolean; tracingUrl?: string | null; tracingAigatewayId?: string | null; hasSemanticCache?: boolean; model?: string; temperature?: number },
+    data: { name?: string; systemPrompt?: string; hasRagEnabled?: boolean; ragDataStoreId?: string | null; guardrailEnabled?: boolean; guardrailRules?: string | null; tracingEnabled?: boolean; tracingUrl?: string | null; tracingAigatewayId?: string | null; hasSemanticCache?: boolean; hasPersistSessionMessage?: boolean; model?: string; temperature?: number },
   ): Promise<Agent | null> {
     const update: Record<string, any> = {};
     if (data.name !== undefined) {
@@ -125,6 +128,9 @@ export class AgentsRepository {
     }
     if (data.hasSemanticCache !== undefined) {
       update.has_semantic_cache = data.hasSemanticCache;
+    }
+    if (data.hasPersistSessionMessage !== undefined) {
+      update.has_persist_session_message = data.hasPersistSessionMessage;
     }
     if (data.model !== undefined) {
       update.model = data.model;

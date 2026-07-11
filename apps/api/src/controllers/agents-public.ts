@@ -33,7 +33,7 @@ export class AgentsPublicController {
     }
 
     try {
-      const { apiKey, message, history } = parsed.data;
+      const { apiKey, sessionId, message, history } = parsed.data;
 
       const agent = await agentsRepository.getAgentByApiKey(apiKey);
       if (!agent) {
@@ -44,6 +44,7 @@ export class AgentsPublicController {
         agentSlug: agent.slug,
         input: message,
         history,
+        sessionId,
       });
 
       response.json(agentResponse);
