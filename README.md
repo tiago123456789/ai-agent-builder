@@ -21,6 +21,9 @@ can set the agents for specific employees.
 - [x] Create and set Skills to the agents you consider import to access the skill.
 - [x] Admin panel
 - [x] Track token cost, total requests, avg tokens per requests and track the user messages to the agents. PS: using MLflow for tracing.
+- [x] Semantic cache to avoid interacting with LLMs for frequently asked questions, improving response time and reducing costs.
+- [x] Persist messages exchanged between users and agents for conversation history and audit purposes.
+- [x] Tool to track and save user questions/actions executed in background to avoid impacting user experience, helping admins improve prompts, RAG, and add new tools/MCPs to agents.
 
 Monorepo with:
 
