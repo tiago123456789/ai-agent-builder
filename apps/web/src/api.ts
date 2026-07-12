@@ -10,6 +10,7 @@ import type {
   Skill,
   Tool,
   User,
+  UserQuestionNoAnswer,
 } from "./types";
 
 // @ts-ignore
@@ -400,4 +401,16 @@ export function linkAgentUsers(
     body: JSON.stringify({ userIds }),
     headers: authHeader(token),
   });
+}
+
+export function listAgentQuestionsNoAnswer(
+  slug: string,
+  token: string,
+  offset = 0,
+  limit = 20,
+) {
+  return request<{ questions: UserQuestionNoAnswer[]; hasMore: boolean }>(
+    `/agents/${slug}/questions-no-answer?offset=${offset}&limit=${limit}`,
+    { headers: authHeader(token) },
+  );
 }

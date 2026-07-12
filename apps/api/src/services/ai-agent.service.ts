@@ -264,7 +264,7 @@ class AiAgentService {
             }
         }
 
-        const actions: AgentAction[] = []
+        const actions: Array<{ [key: string]: any }> = [{ type: "session_id", value: params.sessionId }]
         const tools = await this.toolManager.getToolsAvailable(agentBySlug.id, actions)
         agentBySlug.systemPrompt = agentBySlug.systemPrompt.replace(
             "[TOOLS]", this.getInfoToolsToSystemPrompt(tools)
@@ -310,6 +310,11 @@ class AiAgentService {
         }
 
         agentBySlug.systemPrompt = agentBySlug.systemPrompt.replaceAll("{", "{{").replaceAll("}", "}}")
+        agentBySlug.systemPrompt += "\n EXTRA RULES:\n"
+        agentBySlug.systemPrompt += "- When AI agent doenst have an answer for a question, use the save_question_no_answer tool to save the question and user question"
+        agentBySlug.systemPrompt += "- When AI agent doenst can execute an action for an answer for a question, use the save_question_no_answer tool to save the user question"
+        agentBySlug.systemPrompt += `\n Agent id is ${agentBySlug.id}.`
+        agentBySlug.systemPrompt += `\n Session id is ${params.sessionId}.`
 
         const token = Buffer.from(
             `${process.env.MLFLOW_USERNAME}:${process.env.MLFLOW_PASWORD}`

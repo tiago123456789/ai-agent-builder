@@ -4,10 +4,12 @@ import searchInternet from "./search-internet"
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import Encrypter from "../lib/encrypter";
 import getDetailsSkill from "./get-details-skill";
+import saveQuestionNoAnswer from "./save-question-no-answer.tool";
 
 const nativeTools: { [key: string]: Function } = {
     "searchInternet": searchInternet,
-    "getDetailsSkill": getDetailsSkill
+    "getDetailsSkill": getDetailsSkill,
+    "saveQuestionNoAnswer": saveQuestionNoAnswer,
 }
 
 
@@ -15,7 +17,9 @@ export async function getToolsAvailable(
     id: string, actions: Array<{ [key: string]: any }>
 ): Promise<Array<DynamicStructuredTool>> {
     const tools = await agentsRepository.getToolsByAgentId(id as string)
-    let toolsAvailable: Array<DynamicStructuredTool> = []
+    let toolsAvailable: Array<DynamicStructuredTool> = [
+        nativeTools["saveQuestionNoAnswer"](actions)
+    ]
 
     for (let index = 0; index < tools.length; index += 1) {
         const tool = tools[index]
