@@ -5,6 +5,7 @@ import { agentToolsRepository } from "../repository/agents-tools";
 import { agentMcpRepository } from "../repository/agents-mcp";
 import { agentSkillsRepository } from "../repository/agents-skills";
 import { agentUsersRepository } from "../repository/agents-users";
+import { userQuestionsNoAnswerRepository } from "../repository/user-questions-no-answer";
 import { aiAgentService } from "../services/ai-agent.service";
 import {
   chatRequestSchema,
@@ -717,6 +718,39 @@ export class AgentsController {
       }
       await agentsRepository.revokeApiKey(agent.id);
       response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  @Metric({
+    name: "total_requests",
+    help: "Total of requests",
+    type: "counter",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/questions-no-answer",
+    },
+  })
+  @MetricHistogram({
+    name: "http_requests_duration",
+    help: "Duration of http requests",
+    labels: {
+      method: "GET",
+      route: "/agents/:slug/questions-no-answer",
+    },
+  })
+  async listQuestionsNoAnswer(request: Request, response: Response, next: NextFunction) {
+    const { slug } = request.params as { slug: string };
+    const offset = Math.max(0, parseInt(request.query.offset as string) || 0);
+    const limit = Math.min(100, Math.max(1, parseInt(request.query.limit as string) || 20));
+    try {
+      const agent = await agentsRepository.getAgentBySlug(slug);
+      if (!agent) {
+        return response.status(404).json({ message: "Agent not found" });
+      }
+      const { rows, hasMore } = await userQuestionsNoAnswerRepository.listByAgentId(agent.id, { offset, limit });
+      response.json({ questions: rows, hasMore });
     } catch (error) {
       next(error);
     }

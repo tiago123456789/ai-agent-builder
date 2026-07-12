@@ -25,3 +25,4 @@ agentsRouter.post("/:slug/skills", requireAuth, requireAdmin, (req, res, next) =
 agentsRouter.delete("/:slug/skills/:skillId", requireAuth, requireAdmin, (req, res, next) => agentsController.unlinkSkill(req, res, next));
 agentsRouter.post("/:slug/api-key", requireAuth, requireAdmin, (req, res, next) => agentsController.generateApiKey(req, res, next));
 agentsRouter.delete("/:slug/api-key", requireAuth, requireAdmin, (req, res, next) => agentsController.revokeApiKey(req, res, next));
+agentsRouter.get("/:slug/questions-no-answer", requireAuth, requireAdmin, (req, res, next) => agentsController.listQuestionsNoAnswer(req, res, next));

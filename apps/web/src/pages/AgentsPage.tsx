@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createAgent, deleteAgent, generateAgentApiKey, getAgentMcps, getAgentSkills, getAgentTools, getAgentUsers, linkAgentMcps, linkAgentSkills, linkAgentTools, linkAgentUsers, listAgents, listMcps, listModels, listRagDataStores, listSkills, listTools, listUsers, revokeAgentApiKey, unlinkAgentMcp, unlinkAgentSkill, unlinkAgentTool, unlinkAgentUser, updateAgent } from "../api";
+import { createAgent, deleteAgent, generateAgentApiKey, getAgentMcps, getAgentSkills, getAgentTools, getAgentUsers, linkAgentMcps, linkAgentSkills, linkAgentTools, linkAgentUsers, listAgents, listAgentQuestionsNoAnswer, listMcps, listModels, listRagDataStores, listSkills, listTools, listUsers, revokeAgentApiKey, unlinkAgentMcp, unlinkAgentSkill, unlinkAgentTool, unlinkAgentUser, updateAgent } from "../api";
 import { loadSession } from "../auth";
-import type { Agent, Mcp, ModelInfo, RagDataStore, Skill, Tool, User } from "../types";
+import type { Agent, Mcp, ModelInfo, RagDataStore, Skill, Tool, User, UserQuestionNoAnswer } from "../types";
 
 export function AgentsPage() {
   const session = loadSession();
@@ -55,6 +55,14 @@ export function AgentsPage() {
   const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
   const [generatingKey, setGeneratingKey] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
+  const [selectedAgentSlug, setSelectedAgentSlug] = useState("");
+  const [questions, setQuestions] = useState<UserQuestionNoAnswer[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionsOffset, setQuestionsOffset] = useState(0);
+  const [questionsHasMore, setQuestionsHasMore] = useState(false);
+  const QUESTIONS_PAGE_SIZE = 20;
 
   async function loadAgents() {
     if (!session?.token) return;
@@ -425,15 +433,50 @@ export function AgentsPage() {
     }
   }
 
+  function openQuestionsModal() {
+    setShowQuestionsModal(true);
+    setSelectedAgentSlug("");
+    setQuestions([]);
+    setQuestionsOffset(0);
+    setQuestionsHasMore(false);
+  }
+
+  async function loadQuestions(slug: string, offset: number) {
+    if (!session?.token || !slug) return;
+    setLoadingQuestions(true);
+    try {
+      const { questions: rows, hasMore } = await listAgentQuestionsNoAnswer(slug, session.token, offset, QUESTIONS_PAGE_SIZE);
+      setQuestions(offset === 0 ? rows : [...questions, ...rows]);
+      setQuestionsOffset(offset);
+      setQuestionsHasMore(hasMore);
+    } catch { }
+    finally { setLoadingQuestions(false); }
+  }
+
+  function handleAgentSelect(slug: string) {
+    setSelectedAgentSlug(slug);
+    setQuestions([]);
+    setQuestionsOffset(0);
+    setQuestionsHasMore(false);
+    if (slug) loadQuestions(slug, 0);
+  }
+
   if (loading) return <main className="page-layout"><p>Loading...</p></main>;
 
   return (
     <main className="page-layout">
       <div className="page-header">
         <h2>Agents</h2>
-        <button className="primary-button" onClick={openCreateModal}>
-          New Agent
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {session?.user?.rule === "admin" && (
+            <button className="ghost-button" onClick={openQuestionsModal}>
+              User question without answer
+            </button>
+          )}
+          <button className="primary-button" onClick={openCreateModal}>
+            New Agent
+          </button>
+        </div>
       </div>
 
       {agents.length === 0 ? (
@@ -905,6 +948,68 @@ export function AgentsPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showQuestionsModal && (
+        <div className="modal-overlay" onClick={() => setShowQuestionsModal(false)}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            <h3>User Questions Without Answer</h3>
+            <label>
+              Select Agent
+              <select value={selectedAgentSlug} onChange={(e) => handleAgentSelect(e.target.value)}>
+                <option value="">Choose an agent...</option>
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.slug}>
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {selectedAgentSlug && (
+              <>
+                {loadingQuestions && questions.length === 0 ? (
+                  <p className="muted">Loading...</p>
+                ) : questions.length === 0 ? (
+                  <p className="muted">No unanswered questions for this agent.</p>
+                ) : (
+                  <table className="payload-table tool-table">
+                    <thead>
+                      <tr>
+                        <th>Question</th>
+                        <th>Session ID</th>
+                        <th>Created At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {questions.map((q) => (
+                        <tr key={q.id}>
+                          <td>{q.question}</td>
+                          <td><code>{q.sessionId}</code></td>
+                          <td>{new Date(q.createdAt).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                {loadingQuestions && questions.length > 0 && (
+                  <p className="muted">Loading more...</p>
+                )}
+                {!loadingQuestions && questionsHasMore && (
+                  <button className="ghost-button" style={{ marginTop: 12 }} onClick={() => loadQuestions(selectedAgentSlug, questionsOffset + QUESTIONS_PAGE_SIZE)}>
+                    Load more
+                  </button>
+                )}
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button className="ghost-button" onClick={() => setShowQuestionsModal(false)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

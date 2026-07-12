@@ -116,3 +116,12 @@ export type AgentRequest = {
   message: string;
   history: AgentChatMessage[];
 };
+
+export type UserQuestionNoAnswer = {
+  id: string;
+  question: string;
+  sessionId: string;
+  agentId: string;
+  createdAt: string;
+  updatedAt: string;
+};
