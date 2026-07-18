@@ -55,6 +55,8 @@ export function AgentsPage() {
   const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
   const [generatingKey, setGeneratingKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedEmbed, setCopiedEmbed] = useState(false);
 
   const [showQuestionsModal, setShowQuestionsModal] = useState(false);
   const [selectedAgentSlug, setSelectedAgentSlug] = useState("");
@@ -429,6 +431,28 @@ export function AgentsPage() {
         await navigator.clipboard.writeText(apiKeyValue);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+      } catch { }
+    }
+  }
+
+  async function handleCopyLink() {
+    if (apiKeyValue) {
+      const link = `${window.location.origin}/public/chat?apiKey=${apiKeyValue}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+      } catch { }
+    }
+  }
+
+  async function handleCopyEmbed() {
+    if (apiKeyValue) {
+      const embed = `<iframe src="${window.location.origin}/public/chat?apiKey=${apiKeyValue}" width="400" height="600" frameborder="0"></iframe>`;
+      try {
+        await navigator.clipboard.writeText(embed);
+        setCopiedEmbed(true);
+        setTimeout(() => setCopiedEmbed(false), 2000);
       } catch { }
     }
   }
@@ -908,7 +932,7 @@ export function AgentsPage() {
 
       {apiKeyModalAgent && (
         <div className="modal-overlay" onClick={() => setApiKeyModalAgent(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
             <h3>API Key - {apiKeyModalAgent.name}</h3>
             {apiKeyValue ? (
               <>
@@ -929,15 +953,51 @@ export function AgentsPage() {
                     <button className="primary-button" onClick={handleGenerateApiKey} disabled={generatingKey}>
                       {generatingKey ? "Generating..." : "Regenerate"}
                     </button>
-                    <button className="ghost-button" style={{ marginLeft: 8 }} onClick={() => setApiKeyModalAgent(null)}>
-                      Close
+                  </div>
+                </div>
+
+                <hr className="dropdown-divider" style={{ margin: "20px 0" }} />
+
+                <h4 style={{ margin: "0 0 12px", fontSize: 15 }}>Share & Embed</h4>
+
+                <label>
+                  Share Link
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      value={`${window.location.origin}/public/chat?apiKey=${apiKeyValue}`}
+                      readOnly
+                      style={{ fontFamily: "monospace", flex: 1 }}
+                    />
+                    <button className="ghost-button" onClick={handleCopyLink} style={{ whiteSpace: "nowrap" }}>
+                      {copiedLink ? "Copied!" : "Copy"}
                     </button>
                   </div>
+                </label>
+
+                <label>
+                  Embed Code
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <textarea
+                      value={`<iframe src="${window.location.origin}/public/chat?apiKey=${apiKeyValue}" width="400" height="600" frameborder="0"></iframe>`}
+                      readOnly
+                      rows={2}
+                      style={{ fontFamily: "monospace", flex: 1, resize: "none" }}
+                    />
+                    <button className="ghost-button" onClick={handleCopyEmbed} style={{ whiteSpace: "nowrap", alignSelf: "flex-start", marginTop: 4 }}>
+                      {copiedEmbed ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                </label>
+
+                <div className="modal-actions">
+                  <button className="ghost-button" onClick={() => setApiKeyModalAgent(null)}>
+                    Close
+                  </button>
                 </div>
               </>
             ) : (
               <>
-                <p className="muted">No API key generated yet.</p>
+                <p className="muted">No API key generated yet. Generate a key to enable sharing and embedding.</p>
                 <div className="modal-actions">
                   <button className="ghost-button" onClick={() => setApiKeyModalAgent(null)}>
                     Close

@@ -8,6 +8,7 @@ import { AgentsPage } from "./pages/AgentsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { LoginPage } from "./pages/LoginPage";
 import { McpsPage } from "./pages/McpsPage";
+import { PublicChatPage } from "./pages/PublicChatPage";
 import { RagDataStoresPage } from "./pages/RagDataStoresPage";
 import { SkillsPage } from "./pages/SkillsPage";
 import { ToolsPage } from "./pages/ToolsPage";
@@ -109,6 +110,10 @@ const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: "/public/chat",
+    element: <PublicChatPage />,
   },
 ]);
 
