@@ -414,3 +414,21 @@ export function listAgentQuestionsNoAnswer(
     { headers: authHeader(token) },
   );
 }
+
+export function getPublicAgentInfo(apiKey: string) {
+  return request<{ name: string; slug: string }>(
+    `/agents/public/info?apiKey=${encodeURIComponent(apiKey)}`,
+  );
+}
+
+export function sendPublicAgentMessage(
+  apiKey: string,
+  message: string,
+  history: AgentChatMessage[],
+  sessionId: string,
+) {
+  return request<AgentResponse>("/agents/public/chat", {
+    method: "POST",
+    body: JSON.stringify({ apiKey, sessionId, message, history }),
+  });
+}

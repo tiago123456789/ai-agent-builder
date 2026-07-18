@@ -13,6 +13,7 @@ import { modelsRouter } from "./routes/models";
 import { skillsRouter } from "./routes/skills";
 import { metricsRouter } from "./routes/metrics";
 import { agentsPublicRouter } from "./routes/agents-public";
+import { agentsPublicInfoRouter } from "./routes/agents-public-info";
 import { errorHandler } from "./middleware/error-handler";
 import VectorUpstashSemanticCacheAdapter from "./adapters/vector-upstash-semantic-cache.adapter";
 
@@ -40,6 +41,7 @@ export function createApp() {
   app.use("/models", modelsRouter);
   app.use("/skills", skillsRouter);
   app.use("/agents/public", agentsPublicRouter);
+  app.use("/agents/public/info", agentsPublicInfoRouter);
   app.use("/metrics", metricsRouter)
 
   app.use(errorHandler);
