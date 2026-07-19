@@ -125,3 +125,13 @@ export type UserQuestionNoAnswer = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type MultiAgent = {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription: string | null;
+  nodes: Array<{ id: string; triggerWhen: string }> | null;
+  createdAt: string;
+  updatedAt: string;
+};

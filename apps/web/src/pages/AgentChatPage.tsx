@@ -1,6 +1,6 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useParams } from "react-router-dom";
-import { sendAgentMessage } from "../api";
+import { sendAgentMessage, sendMultiAgentMessage } from "../api";
 import { loadSession } from "../auth";
 import type { AgentChatMessage, AgentResponse } from "../types";
 import ReactMarkdown from 'react-markdown';
@@ -24,16 +24,19 @@ function formatCellValue(value: unknown): string {
   return String(value);
 }
 
-export function AgentChatPage() {
+export function AgentChatPage({ isMultiAgent = false }: { isMultiAgent?: boolean }) {
   const session = loadSession();
-  const { agentSlug } = useParams<{ agentSlug: string }>();
+  const { agentSlug, multiAgentId } = useParams<{ agentSlug?: string; multiAgentId?: string }>();
   const [input, setInput] = useState("");
+
+  const chatId = isMultiAgent ? multiAgentId : agentSlug;
+  const chatLabel = isMultiAgent ? "Multi Agent" : agentSlug;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: crypto.randomUUID(),
       role: "assistant",
-      content: `Connected to agent: ${agentSlug}`,
+      content: `Connected to ${isMultiAgent ? "multi agent" : "agent"}: ${chatLabel}`,
     },
   ]);
   const [isSending, setIsSending] = useState(false);
@@ -49,7 +52,7 @@ export function AgentChatPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!input.trim() || !session?.token || !agentSlug) {
+    if (!input.trim() || !session?.token || !chatId) {
       return;
     }
 
@@ -66,13 +69,9 @@ export function AgentChatPage() {
     setIsSending(true);
 
     try {
-      const payload = await sendAgentMessage(
-        agentSlug,
-        userMessage.content,
-        history,
-        session.token,
-
-      );
+      const payload = isMultiAgent
+        ? await sendMultiAgentMessage(chatId, userMessage.content, history, session.token)
+        : await sendAgentMessage(chatId, userMessage.content, history, session.token);
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -109,7 +108,7 @@ export function AgentChatPage() {
               className={`message-card ${message.role === "user" ? "user" : "assistant"}`}
             >
               <div className="message-meta">
-                <span>{message.role === "user" ? "You" : agentSlug}</span>
+                <span>{message.role === "user" ? "You" : chatLabel}</span>
               </div>
 
               <div className="prose max-w-none">

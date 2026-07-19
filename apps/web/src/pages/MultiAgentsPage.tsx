@@ -1,316 +1,271 @@
-// import { useEffect, useState } from "react";
-// import { listAgents, listMultiAgents, createMultiAgent, updateMultiAgent, deleteMultiAgent, getMultiAgent, runMultiAgent } from "../api";
-// import { loadSession } from "../auth";
-// import type { Agent, AgentChatMessage, MultiAgent } from "../types";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { listAgents, listMultiAgents, createMultiAgent, updateMultiAgent, deleteMultiAgent } from "../api";
+import { loadSession } from "../auth";
+import type { Agent, MultiAgent } from "../types";
 
-// export function MultiAgentsPage() {
-//   const session = loadSession();
-//   const [multiAgents, setMultiAgents] = useState<MultiAgent[]>([]);
-//   const [loading, setLoading] = useState(true);
+export function MultiAgentsPage() {
+  const session = loadSession();
+  const navigate = useNavigate();
+  const [multiAgents, setMultiAgents] = useState<MultiAgent[]>([]);
+  const [loading, setLoading] = useState(true);
 
-//   const [showFormModal, setShowFormModal] = useState(false);
-//   const [editingId, setEditingId] = useState<string | null>(null);
-//   const [formName, setFormName] = useState("");
-//   const [formDescription, setFormDescription] = useState("");
-//   const [formSystemPrompt, setFormSystemPrompt] = useState("");
-//   const [allAgents, setAllAgents] = useState<Agent[]>([]);
-//   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
-//   const [submitting, setSubmitting] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formShortDescription, setFormShortDescription] = useState("");
+  const [formNodes, setFormNodes] = useState<Array<{ id: string; triggerWhen: string }>>([]);
+  const [allAgents, setAllAgents] = useState<Agent[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-//   const [runModal, setRunModal] = useState<MultiAgent | null>(null);
-//   const [runMessage, setRunMessage] = useState("");
-//   const [runHistory, setRunHistory] = useState<AgentChatMessage[]>([]);
-//   const [runOutput, setRunOutput] = useState("");
-//   const [running, setRunning] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
-//   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  async function loadMultiAgents() {
+    if (!session?.token) return;
+    try {
+      const { multiAgents } = await listMultiAgents(session.token);
+      setMultiAgents(multiAgents);
+    } catch { }
+    finally { setLoading(false); }
+  }
 
-//   async function loadMultiAgents() {
-//     if (!session?.token) return;
-//     try {
-//       const { multiAgents } = await listMultiAgents(session.token);
-//       setMultiAgents(multiAgents);
-//     } catch { }
-//     finally { setLoading(false); }
-//   }
+  useEffect(() => { loadMultiAgents(); }, []);
 
-//   useEffect(() => { loadMultiAgents(); }, []);
+  useEffect(() => {
+    function handleClickOutside() {
+      setOpenDropdownId(null);
+    }
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
-//   useEffect(() => {
-//     function handleClickOutside() {
-//       setOpenDropdownId(null);
-//     }
-//     document.addEventListener("click", handleClickOutside);
-//     return () => document.removeEventListener("click", handleClickOutside);
-//   }, []);
+  function toggleDropdown(id: string) {
+    setOpenDropdownId((prev) => (prev === id ? null : id));
+  }
 
-//   function toggleDropdown(id: string) {
-//     setOpenDropdownId((prev) => (prev === id ? null : id));
-//   }
+  async function loadAllAgents() {
+    if (!session?.token) return;
+    try {
+      const { agents } = await listAgents(session.token);
+      setAllAgents(agents);
+    } catch { }
+  }
 
-//   async function loadAllAgents() {
-//     if (!session?.token) return;
-//     try {
-//       const { agents } = await listAgents(session.token);
-//       setAllAgents(agents);
-//     } catch { }
-//   }
+  async function openCreateModal() {
+    setEditingId(null);
+    setFormName("");
+    setFormShortDescription("");
+    setFormNodes([]);
+    setShowFormModal(true);
+    setSubmitting(false);
+    await loadAllAgents();
+  }
 
-//   async function openCreateModal() {
-//     setEditingId(null);
-//     setFormName("");
-//     setFormDescription("");
-//     setFormSystemPrompt("");
-//     setSelectedAgentIds(new Set());
-//     setShowFormModal(true);
-//     setSubmitting(false);
-//     await loadAllAgents();
-//   }
+  async function openEditModal(multiAgent: MultiAgent) {
+    setEditingId(multiAgent.id);
+    setFormName(multiAgent.name);
+    setFormShortDescription(multiAgent.shortDescription ?? "");
+    setFormNodes(multiAgent.nodes ?? []);
+    setShowFormModal(true);
+    setSubmitting(false);
+    await loadAllAgents();
+  }
 
-//   async function openEditModal(multiAgent: MultiAgent) {
-//     setEditingId(multiAgent.id);
-//     setFormName(multiAgent.name);
-//     setFormDescription(multiAgent.description ?? "");
-//     setFormSystemPrompt(multiAgent.systemPrompt);
-//     setShowFormModal(true);
-//     setSubmitting(false);
-//     await loadAllAgents();
-//     if (session?.token) {
-//       try {
-//         const { agents } = await getMultiAgent(multiAgent.id, session.token);
-//         setSelectedAgentIds(new Set(agents.map((a) => a.id)));
-//       } catch { }
-//     }
-//   }
+  function closeFormModal() {
+    setShowFormModal(false);
+    setEditingId(null);
+    setFormName("");
+    setFormShortDescription("");
+    setFormNodes([]);
+    setSubmitting(false);
+  }
 
-//   function closeFormModal() {
-//     setShowFormModal(false);
-//     setEditingId(null);
-//     setFormName("");
-//     setFormDescription("");
-//     setFormSystemPrompt("");
-//     setSelectedAgentIds(new Set());
-//     setSubmitting(false);
-//   }
+  function addNode() {
+    setFormNodes((prev) => [...prev, { id: "", triggerWhen: "" }]);
+  }
 
-//   function toggleAgent(agentId: string) {
-//     setSelectedAgentIds((prev) => {
-//       const next = new Set(prev);
-//       if (next.has(agentId)) next.delete(agentId);
-//       else next.add(agentId);
-//       return next;
-//     });
-//   }
+  function removeNode(index: number) {
+    setFormNodes((prev) => prev.filter((_, i) => i !== index));
+  }
 
-//   async function handleSubmit(event: React.FormEvent) {
-//     event.preventDefault();
-//     if (!session?.token || !formName.trim() || !formSystemPrompt.trim()) return;
-//     setSubmitting(true);
-//     try {
-//       if (editingId) {
-//         await updateMultiAgent(
-//           editingId,
-//           {
-//             name: formName.trim(),
-//             description: formDescription.trim() || undefined,
-//             systemPrompt: formSystemPrompt.trim(),
-//             agentIds: Array.from(selectedAgentIds),
-//           },
-//           session.token,
-//         );
-//       } else {
-//         await createMultiAgent(
-//           {
-//             name: formName.trim(),
-//             description: formDescription.trim() || undefined,
-//             systemPrompt: formSystemPrompt.trim(),
-//             agentIds: Array.from(selectedAgentIds),
-//           },
-//           session.token,
-//         );
-//       }
-//       closeFormModal();
-//       await loadMultiAgents();
-//     } catch { }
-//     finally { setSubmitting(false); }
-//   }
+  function updateNodeId(index: number, id: string) {
+    setFormNodes((prev) => prev.map((node, i) => i === index ? { ...node, id } : node));
+  }
 
-//   async function handleDelete(id: string) {
-//     if (!session?.token || !confirm("Are you sure you want to delete this multi agent?")) return;
-//     try {
-//       await deleteMultiAgent(id, session.token);
-//       await loadMultiAgents();
-//     } catch { }
-//   }
+  function updateNodeTriggerWhen(index: number, triggerWhen: string) {
+    setFormNodes((prev) => prev.map((node, i) => i === index ? { ...node, triggerWhen } : node));
+  }
 
-//   async function openRunModal(multiAgent: MultiAgent) {
-//     setRunModal(multiAgent);
-//     setRunMessage("");
-//     setRunHistory([]);
-//     setRunOutput("");
-//   }
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!session?.token || !formName.trim()) return;
+    setSubmitting(true);
+    try {
+      const validNodes = formNodes.filter((n) => n.id && n.triggerWhen);
 
-//   async function handleRun() {
-//     if (!session?.token || !runModal || !runMessage.trim()) return;
-//     setRunning(true);
-//     try {
-//       const { output } = await runMultiAgent(runModal.id, { message: runMessage, history: runHistory }, session.token);
-//       setRunOutput(output);
-//       setRunHistory((prev) => [...prev, { role: "user", content: runMessage }, { role: "assistant", content: output }]);
-//       setRunMessage("");
-//     } catch { }
-//     finally { setRunning(false); }
-//   }
+      if (editingId) {
+        await updateMultiAgent(
+          editingId,
+          {
+            name: formName.trim(),
+            shortDescription: formShortDescription.trim() || undefined,
+            nodes: validNodes.length > 0 ? validNodes : undefined,
+          },
+          session.token,
+        );
+      } else {
+        const { multiAgent } = await createMultiAgent(
+          {
+            name: formName.trim(),
+            shortDescription: formShortDescription.trim() || undefined,
+            nodes: validNodes.length > 0 ? validNodes : undefined,
+          },
+          session.token,
+        );
+      }
+      closeFormModal();
+      await loadMultiAgents();
+    } catch { }
+    finally { setSubmitting(false); }
+  }
 
-//   if (loading) return <main className="page-layout"><p>Loading...</p></main>;
+  async function handleDelete(id: string) {
+    if (!session?.token || !confirm("Are you sure you want to delete this multi agent?")) return;
+    try {
+      await deleteMultiAgent(id, session.token);
+      await loadMultiAgents();
+    } catch { }
+  }
 
-//   return (
-//     <main className="page-layout">
-//       <div className="page-header">
-//         <h2>Multi Agents</h2>
-//         <button className="primary-button" onClick={openCreateModal}>
-//           New Multi Agent
-//         </button>
-//       </div>
+  if (loading) return <main className="page-layout"><p>Loading...</p></main>;
 
-//       {multiAgents.length === 0 ? (
-//         <p className="muted">No multi agents found.</p>
-//       ) : (
-//         <div className="card-grid">
-//           {multiAgents.map((ma) => (
-//             <div key={ma.id} className="card">
-//               <div className="card-body">
-//                 <h3>{ma.name}</h3>
-//                 <p className="card-preview">{ma.description ? ma.description.slice(0, 120) : "No description"}</p>
-//                 <small className="muted">Created {new Date(ma.createdAt).toLocaleDateString()}</small>
-//               </div>
-//               <div className="card-actions">
-//                 <div className="dropdown-container">
-//                   <button
-//                     className="ghost-button dropdown-trigger"
-//                     onClick={(e) => { e.stopPropagation(); toggleDropdown(ma.id); }}
-//                   >
-//                     Actions ▾
-//                   </button>
-//                   {openDropdownId === ma.id && (
-//                     <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-//                       <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openRunModal(ma); }}>
-//                         Run
-//                       </button>
-//                       <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openEditModal(ma); }}>
-//                         Edit
-//                       </button>
-//                       <hr className="dropdown-divider" />
-//                       <button className="dropdown-item warn" onClick={() => { setOpenDropdownId(null); handleDelete(ma.id); }}>
-//                         Delete
-//                       </button>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
+  return (
+    <main className="page-layout">
+      <div className="page-header">
+        <h2>Multi Agents</h2>
+        <button className="primary-button" onClick={openCreateModal}>
+          New Multi Agent
+        </button>
+      </div>
 
-//       {showFormModal && (
-//         <div className="modal-overlay" onClick={closeFormModal}>
-//           <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
-//             <h3>{editingId ? "Edit Multi Agent" : "New Multi Agent"}</h3>
-//             <form onSubmit={handleSubmit}>
-//               <label>
-//                 Name
-//                 <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Multi agent name" required />
-//               </label>
-//               <label>
-//                 Description
-//                 <textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Brief description..." rows={3} />
-//               </label>
-//               <label>
-//                 System Prompt
-//                 <textarea value={formSystemPrompt} onChange={(e) => setFormSystemPrompt(e.target.value)} placeholder="Orchestrator system instructions..." rows={8} required />
-//               </label>
-//               <label style={{ marginTop: 16, fontWeight: 600 }}>
-//                 Agents
-//               </label>
-//               {allAgents.length === 0 ? (
-//                 <p className="muted">No agents available.</p>
-//               ) : (
-//                 <table className="payload-table tool-table">
-//                   <thead>
-//                     <tr>
-//                       <th></th>
-//                       <th>Name</th>
-//                       <th>Slug</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {allAgents.map((agent) => {
-//                       const isSelected = selectedAgentIds.has(agent.id);
-//                       return (
-//                         <tr key={agent.id}>
-//                           <td>
-//                             <input type="checkbox" checked={isSelected} onChange={() => toggleAgent(agent.id)} />
-//                           </td>
-//                           <td>{agent.name}</td>
-//                           <td><code>{agent.slug}</code></td>
-//                         </tr>
-//                       );
-//                     })}
-//                   </tbody>
-//                 </table>
-//               )}
-//               <div className="modal-actions">
-//                 <button type="button" className="ghost-button" onClick={closeFormModal}>
-//                   Cancel
-//                 </button>
-//                 <button type="submit" className="primary-button" disabled={submitting}>
-//                   {submitting ? "Saving..." : editingId ? "Save" : "Create"}
-//                 </button>
-//               </div>
-//             </form>
-//           </div>
-//         </div>
-//       )}
+      {multiAgents.length === 0 ? (
+        <p className="muted">No multi agents found.</p>
+      ) : (
+        <div className="card-grid">
+          {multiAgents.map((ma) => (
+            <div key={ma.id} className="card" style={{ marginBottom: "70px" }}>
+              <div className="card-menu">
+                <button
+                  className="ghost-button small dropdown-trigger"
+                  onClick={(e) => { e.stopPropagation(); toggleDropdown(ma.id); }}
+                >
+                  ⋮
+                </button>
+                {openDropdownId === ma.id && (
+                  <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); navigate(`/chats/multi-agent/${ma.id}`); }}>
+                      Chat
+                    </button>
+                    <button className="dropdown-item" onClick={() => { setOpenDropdownId(null); openEditModal(ma); }}>
+                      Edit
+                    </button>
+                    <hr className="dropdown-divider" />
+                    <button className="dropdown-item warn" onClick={() => { setOpenDropdownId(null); handleDelete(ma.id); }}>
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="card-body">
+                <h3>{ma.name}</h3>
+                <span className="badge">{ma.slug}</span>
+                {ma.shortDescription && (
+                  <p className="card-preview">{ma.shortDescription.slice(0, 120)}{ma.shortDescription.length > 120 ? "..." : ""}</p>
+                )}
+                {!ma.shortDescription && ma.nodes && ma.nodes.length > 0 && (
+                  <p className="card-preview">{ma.nodes.map((n) => n.id).join(", ")}</p>
+                )}
+                {ma.nodes && ma.nodes.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    {ma.nodes.map((node) => (
+                      <span key={node.id} className="badge" style={{ marginRight: 4, marginBottom: 4 }}>
+                        {node.id}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <small className="muted">Created {new Date(ma.createdAt).toLocaleDateString()}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-//       {runModal && (
-//         <div className="modal-overlay" onClick={() => setRunModal(null)}>
-//           <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
-//             <h3>Run - {runModal.name}</h3>
-//             <div className="chat-messages" style={{ maxHeight: 300, overflowY: "auto", marginBottom: 16 }}>
-//               {runHistory.map((msg, i) => (
-//                 <div key={i} className={`chat-message ${msg.role}`}>
-//                   <strong>{msg.role === "user" ? "You" : "Assistant"}:</strong>
-//                   <p>{msg.content}</p>
-//                 </div>
-//               ))}
-//               {runOutput && runHistory.length === 0 && (
-//                 <div className="chat-message assistant">
-//                   <strong>Assistant:</strong>
-//                   <p>{runOutput}</p>
-//                 </div>
-//               )}
-//             </div>
-//             <div className="chat-input-row" style={{ display: "flex", gap: 8 }}>
-//               <input
-//                 value={runMessage}
-//                 onChange={(e) => setRunMessage(e.target.value)}
-//                 placeholder="Type your message..."
-//                 style={{ flex: 1 }}
-//                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRun(); } }}
-//               />
-//               <button className="primary-button" onClick={handleRun} disabled={running || !runMessage.trim()}>
-//                 {running ? "Running..." : "Send"}
-//               </button>
-//             </div>
-//             <div className="modal-actions" style={{ marginTop: 16 }}>
-//               <button className="ghost-button" onClick={() => setRunModal(null)}>
-//                 Close
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </main>
-//   );
-// }
+      {showFormModal && (
+        <div className="modal-overlay" onClick={closeFormModal}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            <h3>{editingId ? "Edit Multi Agent" : "New Multi Agent"}</h3>
+            <form onSubmit={handleSubmit}>
+              <label>
+                Name
+                <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Multi agent name" required />
+              </label>
+              <label>
+                Short Description
+                <textarea value={formShortDescription} onChange={(e) => setFormShortDescription(e.target.value)} placeholder="Brief description of what this multi agent does..." rows={3} />
+              </label>
+              <div style={{ marginTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <label style={{ fontWeight: 600, margin: 0 }}>Nodes</label>
+                  <button type="button" className="ghost-button" onClick={addNode}>
+                    + Add Node
+                  </button>
+                </div>
+                {formNodes.length === 0 && (
+                  <p className="muted">No nodes added. Click "Add Node" to configure agent routing.</p>
+                )}
+                {formNodes.map((node, index) => (
+                  <div key={index} style={{ border: "1px solid var(--border, #333)", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                    <label>
+                      Agent
+                      <select value={node.id} onChange={(e) => updateNodeId(index, e.target.value)}>
+                        <option value="">Select an agent...</option>
+                        {allAgents.map((agent) => (
+                          <option key={agent.id} value={agent.slug}>
+                            {agent.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Trigger When
+                      <textarea
+                        value={node.triggerWhen}
+                        onChange={(e) => updateNodeTriggerWhen(index, e.target.value)}
+                        placeholder="When user wants to..."
+                        rows={3}
+                      />
+                    </label>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button type="button" className="ghost-button warn" onClick={() => removeNode(index)}>
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost-button" onClick={closeFormModal}>
+                  Cancel
+                </button>
+                <button type="submit" className="primary-button" disabled={submitting}>
+                  {submitting ? "Saving..." : editingId ? "Save" : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
