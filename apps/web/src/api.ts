@@ -6,6 +6,7 @@ import type {
   AuthResponse,
   Mcp,
   ModelInfo,
+  MultiAgent,
   RagDataStore,
   Skill,
   Tool,
@@ -430,5 +431,75 @@ export function sendPublicAgentMessage(
   return request<AgentResponse>("/agents/public/chat", {
     method: "POST",
     body: JSON.stringify({ apiKey, sessionId, message, history }),
+  });
+}
+
+export function listMultiAgents(token: string) {
+  return request<{ multiAgents: MultiAgent[] }>("/multi-agents", {
+    headers: authHeader(token),
+  });
+}
+
+export function getMultiAgent(id: string, token: string) {
+  return request<{ multiAgent: MultiAgent; agents: Agent[] }>(`/multi-agents/${id}`, {
+    headers: authHeader(token),
+  });
+}
+
+export function createMultiAgent(
+  data: { name: string; shortDescription?: string; nodes?: Array<{ id: string; triggerWhen: string }> },
+  token: string,
+) {
+  return request<{ multiAgent: MultiAgent }>("/multi-agents/create", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function updateMultiAgent(
+  id: string,
+  data: { name?: string; shortDescription?: string | null; nodes?: Array<{ id: string; triggerWhen: string }> | null },
+  token: string,
+) {
+  return request<{ multiAgent: MultiAgent }>(`/multi-agents/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function deleteMultiAgent(id: string, token: string) {
+  return request<void>(`/multi-agents/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
+export function linkMultiAgentAgents(id: string, agentIds: string[], token: string) {
+  return request<void>(`/multi-agents/${id}/agents`, {
+    method: "POST",
+    body: JSON.stringify({ agentIds }),
+    headers: authHeader(token),
+  });
+}
+
+export function unlinkMultiAgentAgent(id: string, agentId: string, token: string) {
+  return request<void>(`/multi-agents/${id}/agents/${agentId}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
+export function sendMultiAgentMessage(
+  id: string,
+  message: string,
+  history: AgentChatMessage[],
+  token: string,
+) {
+  return request<AgentResponse>(`/multi-agents/${id}/chat`, {
+    method: "POST",
+    body: JSON.stringify({ message, history }),
+    headers: authHeader(token),
   });
 }

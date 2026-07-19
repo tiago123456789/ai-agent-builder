@@ -8,11 +8,12 @@
     "test": "bun test",
     "migrate": "bun run src/db/migrate.ts",
     "migrate:make": "bun knex migrate:make --knexfile knexfile.ts",
-    "migrate:rollback": "bun src/db/rollback.ts",
+    "migrate:rollback": "bun src/db/rollback.ts"
   },
   "dependencies": {
     "@langchain/community": "^1.1.29",
-    "@langchain/core": "^1.1.46",
+    "@langchain/core": "^1.2.3",
+    "@langchain/langgraph": "^1.4.8",
     "@langchain/mcp-adapters": "^1.1.3",
     "@langchain/openai": "^0.6.17",
     "@upstash/semantic-cache": "^1.0.5",
@@ -27,7 +28,8 @@
     "pg": "^8.20.0",
     "prom-client": "^15.1.3",
     "tool-send-telegram-message": "1.0.0",
-    "zod": "^3.24.4"
+    "zod": "^3.24.4",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",

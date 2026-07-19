@@ -8,6 +8,7 @@ import { AgentsPage } from "./pages/AgentsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { LoginPage } from "./pages/LoginPage";
 import { McpsPage } from "./pages/McpsPage";
+import { MultiAgentsPage } from "./pages/MultiAgentsPage";
 import { PublicChatPage } from "./pages/PublicChatPage";
 import { RagDataStoresPage } from "./pages/RagDataStoresPage";
 import { SkillsPage } from "./pages/SkillsPage";
@@ -86,6 +87,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "multi-agents",
+        element: (
+          <AdminRoute>
+            <MultiAgentsPage />
+          </AdminRoute>
+        ),
+      },
+      {
         path: "rag-data-stores",
         element: (
           <AdminRoute>
@@ -106,6 +115,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <AgentChatPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "chats/multi-agent/:multiAgentId",
+        element: (
+          <ProtectedRoute>
+            <AgentChatPage isMultiAgent />
           </ProtectedRoute>
         ),
       },

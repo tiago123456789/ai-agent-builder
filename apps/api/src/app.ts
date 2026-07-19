@@ -12,6 +12,7 @@ import { usersRouter } from "./routes/users";
 import { modelsRouter } from "./routes/models";
 import { skillsRouter } from "./routes/skills";
 import { metricsRouter } from "./routes/metrics";
+import { multiAgentsRouter } from "./routes/multi-agents";
 import { agentsPublicRouter } from "./routes/agents-public";
 import { agentsPublicInfoRouter } from "./routes/agents-public-info";
 import { errorHandler } from "./middleware/error-handler";
@@ -40,6 +41,7 @@ export function createApp() {
   app.use("/users", usersRouter);
   app.use("/models", modelsRouter);
   app.use("/skills", skillsRouter);
+  app.use("/multi-agents", multiAgentsRouter);
   app.use("/agents/public", agentsPublicRouter);
   app.use("/agents/public/info", agentsPublicInfoRouter);
   app.use("/metrics", metricsRouter)
