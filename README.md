@@ -24,6 +24,8 @@ can set the agents for specific employees.
 - [x] Semantic cache to avoid interacting with LLMs for frequently asked questions, improving response time and reducing costs.
 - [x] Persist messages exchanged between users and agents for conversation history and audit purposes.
 - [x] Tool to track and save user questions/actions executed in background to avoid impacting user experience, helping admins improve prompts, RAG, and add new tools/MCPs to agents.
+- [x] AI Agent Embed Link - Embed agents in third-party applications without implementation using iframe or HTML embed tags.
+- [x] Multi Agent Feature - Create multi-agent workflows using Langgraph graph-based architecture by selecting existing AI agents.
 
 Monorepo with:
 
@@ -147,6 +149,96 @@ curl --request POST 'http://localhost:3001/agents/public/chat' \
     ]
   }'
 ```
+
+## Embed AI Agents in Third-Party Applications
+
+You can embed your AI agents directly into any website or application without implementing complex integrations.
+
+### Steps to Generate Embed Code
+
+1. Access the dashboard and navigate to the **/agents** page
+2. Select the agent you want to embed
+3. Click on **Generate Embed Code** to create the embed link
+4. Copy the generated code and paste it into your third-party application
+
+### Example Embed Code (iframe)
+
+```html
+<iframe 
+  src="https://your-domain.com/embed/agent/your-agent-slug" 
+  width="400" 
+  height="600" 
+  frameborder="0"
+  title="AI Agent Chat">
+</iframe>
+```
+
+### Example Embed Code (HTML embed tag)
+
+```html
+<embed 
+  src="https://your-domain.com/embed/agent/your-agent-slug" 
+  type="text/html" 
+  width="400" 
+  height="600">
+```
+
+### Customization Options
+
+- **width**: Set the width of the embed container (e.g., `400px`, `100%`)
+- **height**: Set the height of the embed container (e.g., `600px`, `500px`)
+- **theme**: Customize the appearance with light or dark theme
+- **position**: Choose corner placement (bottom-right, bottom-left, etc.)
+
+### Security Considerations
+
+- The embed link includes a secure token that expires after a configurable period
+- CORS settings can be configured in the agent settings
+- Rate limiting is applied to prevent abuse
+
+## Create Multi-Agent Workflows with Langgraph
+
+The platform supports creating multi-agent workflows using Langgraph's graph-based architecture, allowing you to combine multiple AI agents into a single orchestrated system.
+
+### How It Works
+
+1. Access the dashboard and navigate to the **/agents** page
+2. Click on **Create Multi-Agent** to start building a workflow
+3. Select existing AI agents to include in your multi-agent system
+4. Define the workflow graph using Langgraph's node and edge system
+
+### Langgraph Graph-Based Workflow
+
+The multi-agent feature uses Langgraph's powerful graph-based architecture:
+
+- **Nodes**: Each node represents an AI agent with specific capabilities
+- **Edges**: Define the flow and decision points between agents
+- **Conditional Logic**: Route requests to different agents based on context
+- **State Management**: Share and manage state across multiple agents
+
+### Example Workflow
+
+```
+User Input → Intent Classifier Agent → 
+  ├── If "Technical Support" → Technical Support Agent → Response
+  ├── If "Sales Inquiry" → Sales Agent → Response  
+  └── If "General Question" → General Assistant Agent → Response
+```
+
+### Creating a Multi-Agent Workflow
+
+1. **Select Agents**: Choose from your existing AI agents created in the platform
+2. **Define Graph Structure**: Use the visual editor to connect agents
+3. **Set Entry Points**: Define which agent handles initial user input
+4. **Configure Routing**: Set up conditional logic for agent selection
+5. **Test & Deploy**: Test the workflow and deploy to production
+
+### Use Cases
+
+- **Customer Support**: Route different types of inquiries to specialized agents
+- **Content Creation**: Chain agents for research → writing → editing workflows
+- **Data Processing**: Pipeline agents for extraction → transformation → analysis
+- **Decision Making**: Parallel agents for different perspectives → aggregation agent
 
 ## Create your custom tool
 
