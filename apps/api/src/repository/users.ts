@@ -7,6 +7,7 @@ export type UserRow = {
   email: string;
   password: string;
   rule: "admin" | "employee";
+  group_tools_allowed_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -16,6 +17,7 @@ export type UserPublic = {
   name: string;
   email: string;
   rule: "admin" | "employee";
+  groupToolsAllowedId: string | null;
   createdAt: string;
 };
 
@@ -26,13 +28,14 @@ export class UsersRepository {
       name: row.name,
       email: row.email,
       rule: row.rule,
+      groupToolsAllowedId: row.group_tools_allowed_id ?? null,
       createdAt: row.created_at,
     };
   }
 
   async listUsers(): Promise<UserPublic[]> {
     const rows = await db("users")
-      .select("id", "name", "email", "rule", "created_at")
+      .select("id", "name", "email", "rule", "group_tools_allowed_id", "created_at")
       .orderBy("created_at", "desc");
     return rows.map((row: any) => this.toPublic(row));
   }
@@ -52,6 +55,7 @@ export class UsersRepository {
     email: string;
     password: string;
     rule: "admin" | "employee";
+    groupToolsAllowedId?: string | null;
   }): Promise<UserPublic> {
     const hashed = await bcrypt.hash(data.password, 10);
     const [row] = await db("users")
@@ -60,14 +64,15 @@ export class UsersRepository {
         email: data.email,
         password: hashed,
         rule: data.rule,
+        group_tools_allowed_id: data.groupToolsAllowedId ?? null,
       })
-      .returning(["id", "name", "email", "rule", "created_at"]);
+      .returning(["id", "name", "email", "rule", "group_tools_allowed_id", "created_at"]);
     return this.toPublic(row);
   }
 
   async updateUser(
     id: string,
-    data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee" },
+    data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee"; groupToolsAllowedId?: string | null },
   ): Promise<UserPublic | null> {
     const update: Record<string, any> = {};
     if (data.name !== undefined) update.name = data.name;
@@ -76,12 +81,13 @@ export class UsersRepository {
       update.password = await bcrypt.hash(data.password, 10);
     }
     if (data.rule !== undefined) update.rule = data.rule;
+    if (data.groupToolsAllowedId !== undefined) update.group_tools_allowed_id = data.groupToolsAllowedId;
     update.updated_at = db.fn.now();
 
     const [row] = await db("users")
       .where({ id })
       .update(update)
-      .returning(["id", "name", "email", "rule", "created_at"]);
+      .returning(["id", "name", "email", "rule", "group_tools_allowed_id", "created_at"]);
     return row ? this.toPublic(row) : null;
   }
 

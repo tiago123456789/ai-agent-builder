@@ -9,6 +9,7 @@ declare global {
         email: string;
         name: string;
         rule: "admin" | "employee";
+        groupToolsAllowedId?: string | null;
       };
     }
   }

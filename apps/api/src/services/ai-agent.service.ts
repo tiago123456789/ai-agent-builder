@@ -20,12 +20,15 @@ import { getToolsAvailable } from "../tools/toolManager";
 import { track } from "../lib/metrics";
 import type { ISemanticCacheAdapter } from "../adapters/semantic-cache.interface";
 import VectorUpstashSemanticCacheAdapter from "../adapters/vector-upstash-semantic-cache.adapter";
+import { usersRepository } from "../repository/users";
+import { groupToolsRepository } from "../repository/group-tools";
 
 export interface AiAgentParams {
     agentSlug: string,
     input: string,
     history: AgentChatMessage[],
     sessionId?: string,
+    userId?: string,
 }
 
 class AiAgentService {
@@ -37,7 +40,7 @@ class AiAgentService {
         private readonly sessionMessagesRepository: SessionMessagesRepository = new SessionMessagesRepository(),
         private readonly encrypter: Encrypter = new Encrypter(),
         private readonly toolManager: {
-            getToolsAvailable: (agentId: string, actions: AgentAction[]) => Promise<DynamicStructuredTool[]>
+            getToolsAvailable: (agentId: string, actions: AgentAction[], allowedToolIds?: Set<string>, allowedMcpIds?: Set<string>) => Promise<DynamicStructuredTool[]>
         },
         private readonly semanticCacheAdapter: ISemanticCacheAdapter = new VectorUpstashSemanticCacheAdapter(),
     ) {
@@ -265,7 +268,24 @@ class AiAgentService {
         }
 
         const actions: Array<{ [key: string]: any }> = [{ type: "session_id", value: params.sessionId }]
-        const tools = await this.toolManager.getToolsAvailable(agentBySlug.id, actions)
+
+        let allowedToolIds: Set<string> | undefined;
+        let allowedMcpIds: Set<string> | undefined;
+
+        if (params.userId) {
+            const user = await usersRepository.getUserById(params.userId);
+            if (user?.group_tools_allowed_id) {
+                const toolIds = await groupToolsRepository.listAllowedToolIdsByGroupId(user.group_tools_allowed_id);
+                const mcpIds = await groupToolsRepository.listAllowedMcpIdsByGroupId(user.group_tools_allowed_id);
+                allowedToolIds = new Set(toolIds);
+                allowedMcpIds = new Set(mcpIds);
+            }
+        }
+
+        const tools = await this.toolManager.getToolsAvailable(
+            agentBySlug.id, actions, allowedToolIds, allowedMcpIds
+        )
+
         agentBySlug.systemPrompt = agentBySlug.systemPrompt.replace(
             "[TOOLS]", this.getInfoToolsToSystemPrompt(tools)
         )

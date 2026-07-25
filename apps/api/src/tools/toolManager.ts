@@ -14,9 +14,16 @@ const nativeTools: { [key: string]: Function } = {
 
 
 export async function getToolsAvailable(
-    id: string, actions: Array<{ [key: string]: any }>
+    id: string, actions: Array<{ [key: string]: any }>,
+    allowedToolIds?: Set<string>,
+    allowedMcpIds?: Set<string>,
 ): Promise<Array<DynamicStructuredTool>> {
-    const tools = await agentsRepository.getToolsByAgentId(id as string)
+    let tools = await agentsRepository.getToolsByAgentId(id as string)
+
+    if (allowedToolIds) {
+        tools = tools.filter((tool: any) => allowedToolIds.has(tool.id))
+    }
+
     let toolsAvailable: Array<DynamicStructuredTool> = [
         nativeTools["saveQuestionNoAnswer"](actions)
     ]
@@ -43,7 +50,12 @@ export async function getToolsAvailable(
     }
 
 
-    const mcps: Array<{ [key: string]: any }> = await agentsRepository.getMcpToolsByAgentId(id)
+    let mcps: Array<{ [key: string]: any }> = await agentsRepository.getMcpToolsByAgentId(id)
+
+    if (allowedMcpIds) {
+        mcps = mcps.filter((mcp: any) => allowedMcpIds.has(mcp.id))
+    }
+
     for (let index = 0; index < mcps.length; index += 1) {
         const item: { [key: string]: any } = mcps[index]
 

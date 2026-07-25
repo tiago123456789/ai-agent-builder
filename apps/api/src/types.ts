@@ -95,6 +95,23 @@ export type AgentResponse = {
   };
 };
 
+export type GroupToolsAllowed = {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GroupTool = {
+  id: string;
+  groupToolsAllowedId: string;
+  toolId: string;
+  type: "TOOL" | "MCP";
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AgentChatMessage = {
   role: "user" | "assistant";
   content: string;

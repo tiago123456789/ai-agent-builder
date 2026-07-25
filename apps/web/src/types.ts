@@ -45,6 +45,7 @@ export type User = {
   name: string;
   email: string;
   rule: "admin" | "employee";
+  groupToolsAllowedId: string | null;
   createdAt: string;
 };
 
@@ -102,6 +103,23 @@ export type Skill = {
   name: string;
   description: string | null;
   content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GroupToolsAllowed = {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GroupTool = {
+  id: string;
+  groupToolsAllowedId: string;
+  toolId: string;
+  type: "TOOL" | "MCP";
   createdAt: string;
   updatedAt: string;
 };
