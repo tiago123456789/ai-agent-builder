@@ -51,6 +51,7 @@ export class AgentsController {
         input: parsed.data.message,
         history: parsed.data.history,
         sessionId: request.user!.id,
+        userId: request.user!.id,
       });
       return response.json(agentResponse);
     } catch (error) {

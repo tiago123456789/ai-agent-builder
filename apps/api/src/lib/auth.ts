@@ -8,6 +8,7 @@ export type AuthUser = {
   email: string;
   name: string;
   rule: "admin" | "employee";
+  groupToolsAllowedId?: string | null;
 };
 
 export async function validateCredentials(
@@ -18,7 +19,13 @@ export async function validateCredentials(
   if (!user) return null;
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) return null;
-  return { id: user.id, email: user.email, name: user.name, rule: user.rule };
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    rule: user.rule,
+    groupToolsAllowedId: user.group_tools_allowed_id ?? null,
+  };
 }
 
 export function signToken(user: AuthUser) {

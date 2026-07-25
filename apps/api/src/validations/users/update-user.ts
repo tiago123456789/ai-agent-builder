@@ -5,4 +5,5 @@ export const updateUserSchema = z.object({
   email: z.string().email().optional(),
   password: z.string().min(4).optional(),
   rule: z.enum(["admin", "employee"]).optional(),
+  groupToolsAllowedId: z.string().uuid().nullable().optional(),
 });

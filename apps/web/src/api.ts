@@ -4,6 +4,8 @@ import type {
   AgentRequest,
   AgentResponse,
   AuthResponse,
+  GroupToolsAllowed,
+  GroupTool,
   Mcp,
   ModelInfo,
   MultiAgent,
@@ -261,7 +263,7 @@ export function listUsers(token: string) {
 }
 
 export function createUser(
-  data: { name: string; email: string; password: string; rule: "admin" | "employee" },
+  data: { name: string; email: string; password: string; rule: "admin" | "employee"; groupToolsAllowedId?: string | null },
   token: string,
 ) {
   return request<{ user: User }>("/users", {
@@ -273,7 +275,7 @@ export function createUser(
 
 export function updateUser(
   id: string,
-  data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee" },
+  data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee"; groupToolsAllowedId?: string | null },
   token: string,
 ) {
   return request<{ user: User }>(`/users/${id}`, {
@@ -486,6 +488,78 @@ export function linkMultiAgentAgents(id: string, agentIds: string[], token: stri
 
 export function unlinkMultiAgentAgent(id: string, agentId: string, token: string) {
   return request<void>(`/multi-agents/${id}/agents/${agentId}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
+export function listGroupToolsAllowed(token: string) {
+  return request<{ groups: GroupToolsAllowed[] }>("/group-tools-allowed", {
+    headers: authHeader(token),
+  });
+}
+
+export function createGroupToolsAllowed(
+  data: { title: string; description: string },
+  token: string,
+) {
+  return request<{ group: GroupToolsAllowed }>("/group-tools-allowed", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function getGroupToolsAllowed(id: string, token: string) {
+  return request<{ group: GroupToolsAllowed }>(`/group-tools-allowed/${id}`, {
+    headers: authHeader(token),
+  });
+}
+
+export function updateGroupToolsAllowed(
+  id: string,
+  data: { title?: string; description?: string },
+  token: string,
+) {
+  return request<{ group: GroupToolsAllowed }>(`/group-tools-allowed/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function deleteGroupToolsAllowed(id: string, token: string) {
+  return request<void>(`/group-tools-allowed/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
+export function listGroupToolsAllowedTools(id: string, token: string) {
+  return request<{ tools: GroupTool[] }>(`/group-tools-allowed/${id}/tools`, {
+    headers: authHeader(token),
+  });
+}
+
+export function linkGroupToolsAllowedTools(
+  id: string,
+  entries: Array<{ toolId: string; type: "TOOL" | "MCP" }>,
+  token: string,
+) {
+  return request<void>(`/group-tools-allowed/${id}/tools`, {
+    method: "POST",
+    body: JSON.stringify({ entries }),
+    headers: authHeader(token),
+  });
+}
+
+export function unlinkGroupToolsAllowedTool(
+  id: string,
+  toolId: string,
+  type: "TOOL" | "MCP",
+  token: string,
+) {
+  return request<void>(`/group-tools-allowed/${id}/tools/${toolId}?type=${type}`, {
     method: "DELETE",
     headers: authHeader(token),
   });
