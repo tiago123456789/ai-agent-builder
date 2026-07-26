@@ -9,6 +9,7 @@ export type AuthUser = {
   name: string;
   rule: "admin" | "employee";
   groupToolsAllowedId?: string | null;
+  controlGroupRagId?: string | null;
 };
 
 export async function validateCredentials(
@@ -25,6 +26,7 @@ export async function validateCredentials(
     name: user.name,
     rule: user.rule,
     groupToolsAllowedId: user.group_tools_allowed_id ?? null,
+    controlGroupRagId: user.control_group_rag_id ?? null,
   };
 }
 

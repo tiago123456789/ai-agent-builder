@@ -105,7 +105,7 @@ class AiAgentService {
         return instructions
     }
 
-    private async getDataFromRag(ragDataStoreId: string, params: AiAgentParams): Promise<string> {
+    private async getDataFromRag(ragDataStoreId: string, params: AiAgentParams, controlGroupRagId?: string | null): Promise<string> {
         const rag = await this.ragDataStoresRepository.getById(ragDataStoreId as string)
         const connectionString = this.encrypter.decrypt(rag[0].connection as string)
         const postgresConnectionOptions = {
@@ -131,9 +131,12 @@ class AiAgentService {
             }
         );
 
-        const retriever = vectorStore.asRetriever({
-            k: 3,
-        });
+        const retrieverOptions: { k: number; filter?: { controlGroupRagId: string } } = { k: 3 };
+        if (controlGroupRagId) {
+          retrieverOptions.filter = { controlGroupRagId };
+        }
+
+        const retriever = vectorStore.asRetriever(retrieverOptions);
 
         const docs = await retriever.invoke(
             params.input
@@ -271,6 +274,7 @@ class AiAgentService {
 
         let allowedToolIds: Set<string> | undefined;
         let allowedMcpIds: Set<string> | undefined;
+        let controlGroupRagId: string | null | undefined;
 
         if (params.userId) {
             const user = await usersRepository.getUserById(params.userId);
@@ -280,6 +284,7 @@ class AiAgentService {
                 allowedToolIds = new Set(toolIds);
                 allowedMcpIds = new Set(mcpIds);
             }
+            controlGroupRagId = user?.control_group_rag_id ?? null;
         }
 
         const tools = await this.toolManager.getToolsAvailable(
@@ -301,7 +306,7 @@ class AiAgentService {
                     agentId: agentBySlug.id
                 }
             }, () => {
-                return this.getDataFromRag(agentBySlug.ragDataStoreId as string, params)
+                return this.getDataFromRag(agentBySlug.ragDataStoreId as string, params, controlGroupRagId)
             })
             agentBySlug.systemPrompt += `\n\nRAG CONTEXT TO USE ANSWER THE QUESTIONS: ${context}`;
         }

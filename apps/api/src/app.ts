@@ -16,6 +16,7 @@ import { multiAgentsRouter } from "./routes/multi-agents";
 import { agentsPublicRouter } from "./routes/agents-public";
 import { agentsPublicInfoRouter } from "./routes/agents-public-info";
 import { groupToolsAllowedRouter } from "./routes/group-tools-allowed";
+import { controlGroupRagRouter } from "./routes/control-group-rag";
 import { errorHandler } from "./middleware/error-handler";
 import VectorUpstashSemanticCacheAdapter from "./adapters/vector-upstash-semantic-cache.adapter";
 
@@ -46,6 +47,7 @@ export function createApp() {
   app.use("/agents/public", agentsPublicRouter);
   app.use("/agents/public/info", agentsPublicInfoRouter);
   app.use("/group-tools-allowed", groupToolsAllowedRouter);
+  app.use("/control-group-rag", controlGroupRagRouter);
   app.use("/metrics", metricsRouter)
 
   app.use(errorHandler);
