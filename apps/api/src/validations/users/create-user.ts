@@ -6,4 +6,5 @@ export const createUserSchema = z.object({
   password: z.string().min(4, "password must be at least 4 characters"),
   rule: z.enum(["admin", "employee"]),
   groupToolsAllowedId: z.string().uuid().nullable().optional(),
+  controlGroupRagId: z.string().uuid().nullable().optional(),
 });

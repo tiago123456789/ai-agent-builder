@@ -6,4 +6,5 @@ export const updateUserSchema = z.object({
   password: z.string().min(4).optional(),
   rule: z.enum(["admin", "employee"]).optional(),
   groupToolsAllowedId: z.string().uuid().nullable().optional(),
+  controlGroupRagId: z.string().uuid().nullable().optional(),
 });

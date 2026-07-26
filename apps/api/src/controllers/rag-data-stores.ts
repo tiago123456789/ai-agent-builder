@@ -102,7 +102,7 @@ export class RagDataStoresController {
     }
 
     const { id } = req.params as { id: string };
-    const { text } = parsed.data;
+    const { text, groupRagId } = parsed.data;
 
     try {
       const stores = await ragDataStoresRepository.getById(id);
@@ -138,7 +138,7 @@ export class RagDataStoresController {
       await vectorStore.addDocuments([
         {
           pageContent: text,
-          metadata: { dataStoreId: id },
+          metadata: { dataStoreId: id, controlGroupRagId: groupRagId ?? null },
         },
       ]);
 
@@ -248,7 +248,7 @@ export class RagDataStoresController {
     }
 
     const { id, docId } = req.params as { id: string; docId: string };
-    const { content } = parsed.data;
+    const { content, groupRagId } = parsed.data;
 
     try {
       const stores = await ragDataStoresRepository.getById(id);
@@ -284,7 +284,7 @@ export class RagDataStoresController {
       await vectorStore.delete({ ids: [docId] });
 
       await vectorStore.addDocuments(
-        [{ pageContent: content, metadata: { dataStoreId: id } }],
+        [{ pageContent: content, metadata: { dataStoreId: id, controlGroupRagId: groupRagId ?? null } }],
         { ids: [docId] },
       );
 

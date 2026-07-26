@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
-import { createRagDataStore, listRagDataStores, addDocumentToDataStore, searchRagDocuments, updateRagDocument, deleteRagDocument } from "../api";
+import {
+  createRagDataStore,
+  listRagDataStores,
+  addDocumentToDataStore,
+  searchRagDocuments,
+  updateRagDocument,
+  deleteRagDocument,
+  listControlGroupRag,
+  createControlGroupRag,
+  updateControlGroupRag,
+  deleteControlGroupRag,
+} from "../api";
 import { loadSession } from "../auth";
-import type { RagDataStore } from "../types";
+import type { RagDataStore, ControlGroupRag } from "../types";
 
 export function RagDataStoresPage() {
   const session = loadSession();
@@ -10,10 +21,12 @@ export function RagDataStoresPage() {
   const [showModal, setShowModal] = useState(false);
   const [formDescription, setFormDescription] = useState("");
   const [formConnection, setFormConnection] = useState("");
+  const [formGroupRagId, setFormGroupRagId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addStoreId, setAddStoreId] = useState<string | null>(null);
   const [addText, setAddText] = useState("");
+  const [addGroupRagId, setAddGroupRagId] = useState<string>("");
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStoreId, setUpdateStoreId] = useState<string | null>(null);
@@ -25,6 +38,13 @@ export function RagDataStoresPage() {
   const [updateSubmitting, setUpdateSubmitting] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
+  const [controlGroups, setControlGroups] = useState<ControlGroupRag[]>([]);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [groupFormTitle, setGroupFormTitle] = useState("");
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editGroupTitle, setEditGroupTitle] = useState("");
+
   async function loadStores() {
     if (!session?.token) return;
     try {
@@ -34,11 +54,20 @@ export function RagDataStoresPage() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { loadStores(); }, []);
+  async function loadControlGroups() {
+    if (!session?.token) return;
+    try {
+      const { groups } = await listControlGroupRag(session.token);
+      setControlGroups(groups);
+    } catch {}
+  }
+
+  useEffect(() => { loadStores(); loadControlGroups(); }, []);
 
   function openCreateModal() {
     setFormDescription("");
     setFormConnection("");
+    setFormGroupRagId(session?.user?.controlGroupRagId ?? "");
     setShowModal(true);
     setSubmitting(false);
   }
@@ -47,6 +76,7 @@ export function RagDataStoresPage() {
     setShowModal(false);
     setFormDescription("");
     setFormConnection("");
+    setFormGroupRagId("");
     setSubmitting(false);
   }
 
@@ -68,6 +98,7 @@ export function RagDataStoresPage() {
   function openAddModal(storeId: string) {
     setAddStoreId(storeId);
     setAddText("");
+    setAddGroupRagId(session?.user?.controlGroupRagId ?? "");
     setAddSubmitting(false);
     setShowAddModal(true);
   }
@@ -76,6 +107,7 @@ export function RagDataStoresPage() {
     setShowAddModal(false);
     setAddStoreId(null);
     setAddText("");
+    setAddGroupRagId("");
     setAddSubmitting(false);
   }
 
@@ -84,7 +116,7 @@ export function RagDataStoresPage() {
     if (!session?.token || !addStoreId || !addText.trim()) return;
     setAddSubmitting(true);
     try {
-      await addDocumentToDataStore(addStoreId, addText.trim(), session.token);
+      await addDocumentToDataStore(addStoreId, addText.trim(), session.token, addGroupRagId || null);
       closeAddModal();
     } catch {}
     finally { setAddSubmitting(false); }
@@ -167,15 +199,68 @@ export function RagDataStoresPage() {
     }
   }
 
+  function openGroupModal() {
+    setShowGroupModal(true);
+    setGroupFormTitle("");
+    setEditingGroupId(null);
+    setEditGroupTitle("");
+    loadControlGroups();
+  }
+
+  async function handleCreateGroup(event: React.FormEvent) {
+    event.preventDefault();
+    if (!session?.token || !groupFormTitle.trim()) return;
+    setSavingGroup(true);
+    try {
+      await createControlGroupRag({ title: groupFormTitle.trim() }, session.token);
+      setGroupFormTitle("");
+      await loadControlGroups();
+    } catch {}
+    finally { setSavingGroup(false); }
+  }
+
+  function startEditGroup(group: ControlGroupRag) {
+    setEditingGroupId(group.id);
+    setEditGroupTitle(group.title);
+  }
+
+  function cancelEditGroup() {
+    setEditingGroupId(null);
+    setEditGroupTitle("");
+  }
+
+  async function handleUpdateGroup(id: string) {
+    if (!session?.token || !editGroupTitle.trim()) return;
+    try {
+      await updateControlGroupRag(id, { title: editGroupTitle.trim() }, session.token);
+      setEditingGroupId(null);
+      setEditGroupTitle("");
+      await loadControlGroups();
+    } catch {}
+  }
+
+  async function handleDeleteGroup(id: string) {
+    if (!session?.token || !window.confirm("Are you sure you want to delete this group?")) return;
+    try {
+      await deleteControlGroupRag(id, session.token);
+      await loadControlGroups();
+    } catch {}
+  }
+
   if (loading) return <main className="page-layout"><p>Loading...</p></main>;
 
   return (
     <main className="page-layout">
       <div className="page-header">
         <h2>RAG Data Stores</h2>
-        <button className="primary-button" onClick={openCreateModal}>
-          New Data Store
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="ghost-button" onClick={openGroupModal}>
+            Groups
+          </button>
+          <button className="primary-button" onClick={openCreateModal}>
+            New Data Store
+          </button>
+        </div>
       </div>
 
       {stores.length === 0 ? (
@@ -233,6 +318,15 @@ export function RagDataStoresPage() {
                   required
                 />
               </label>
+              <label>
+                Control Group RAG
+                <select value={formGroupRagId} onChange={(e) => setFormGroupRagId(e.target.value)}>
+                  <option value="">No group</option>
+                  {controlGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.title}</option>
+                  ))}
+                </select>
+              </label>
               <div className="modal-actions">
                 <button type="button" className="ghost-button" onClick={closeModal}>
                   Cancel
@@ -261,6 +355,15 @@ export function RagDataStoresPage() {
                   required
                   style={{ width: "100%", resize: "vertical" }}
                 />
+              </label>
+              <label>
+                Control Group RAG
+                <select value={addGroupRagId} onChange={(e) => setAddGroupRagId(e.target.value)}>
+                  <option value="">No group</option>
+                  {controlGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.title}</option>
+                  ))}
+                </select>
               </label>
               <div className="modal-actions">
                 <button type="button" className="ghost-button" onClick={closeAddModal}>
@@ -367,6 +470,95 @@ export function RagDataStoresPage() {
 
             <div className="modal-actions">
               <button className="ghost-button" onClick={closeUpdateModal}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGroupModal && (
+        <div className="modal-overlay" onClick={() => setShowGroupModal(false)}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            <h3>Control Group RAG</h3>
+
+            <div style={{ marginBottom: 16 }}>
+              <h4 style={{ margin: "0 0 8px" }}>Create New Group</h4>
+              <form onSubmit={handleCreateGroup} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                <label style={{ flex: 1, margin: 0 }}>
+                  Title
+                  <input
+                    value={groupFormTitle}
+                    onChange={(e) => setGroupFormTitle(e.target.value)}
+                    placeholder="Group name"
+                    required
+                  />
+                </label>
+                <button type="submit" className="primary-button" disabled={savingGroup} style={{ height: 36 }}>
+                  {savingGroup ? "Creating..." : "Create"}
+                </button>
+              </form>
+            </div>
+
+            <hr className="dropdown-divider" style={{ margin: "12px 0" }} />
+
+            <h4 style={{ margin: "0 0 8px" }}>Existing Groups</h4>
+            {controlGroups.length === 0 ? (
+              <p className="muted">No groups created yet.</p>
+            ) : (
+              <table className="payload-table" style={{ width: "100%" }}>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Created at</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {controlGroups.map((group) => (
+                    <tr key={group.id}>
+                      <td>
+                        {editingGroupId === group.id ? (
+                          <input
+                            value={editGroupTitle}
+                            onChange={(e) => setEditGroupTitle(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleUpdateGroup(group.id); }}
+                            style={{ width: "100%" }}
+                          />
+                        ) : (
+                          group.title
+                        )}
+                      </td>
+                      <td>{new Date(group.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        {editingGroupId === group.id ? (
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button className="primary-button" onClick={() => handleUpdateGroup(group.id)}>
+                              Save
+                            </button>
+                            <button className="ghost-button" onClick={cancelEditGroup}>
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button className="ghost-button" onClick={() => startEditGroup(group)}>
+                              Edit
+                            </button>
+                            <button className="ghost-button warn" onClick={() => handleDeleteGroup(group.id)}>
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <div className="modal-actions">
+              <button className="ghost-button" onClick={() => setShowGroupModal(false)}>
                 Close
               </button>
             </div>

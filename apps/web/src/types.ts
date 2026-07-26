@@ -37,6 +37,7 @@ export type AuthResponse = {
     email: string;
     name: string;
     rule: "admin" | "employee";
+    controlGroupRagId?: string | null;
   };
 };
 
@@ -46,7 +47,15 @@ export type User = {
   email: string;
   rule: "admin" | "employee";
   groupToolsAllowedId: string | null;
+  controlGroupRagId: string | null;
   createdAt: string;
+};
+
+export type ControlGroupRag = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type RagDataStore = {

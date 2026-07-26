@@ -4,6 +4,7 @@ import type {
   AgentRequest,
   AgentResponse,
   AuthResponse,
+  ControlGroupRag,
   GroupToolsAllowed,
   GroupTool,
   Mcp,
@@ -103,7 +104,7 @@ export function listRagDataStores(token: string) {
 }
 
 export function createRagDataStore(
-  data: { description: string; connection: string },
+  data: { description: string; connection: string; groupRagId?: string | null },
   token: string,
 ) {
   return request<{ ragDataStore: RagDataStore }>("/rag-data-stores", {
@@ -113,10 +114,10 @@ export function createRagDataStore(
   });
 }
 
-export function addDocumentToDataStore(id: string, text: string, token: string) {
+export function addDocumentToDataStore(id: string, text: string, token: string, groupRagId?: string | null) {
   return request<{ success: boolean }>(`/rag-data-stores/${id}/documents`, {
     method: "POST",
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, groupRagId: groupRagId ?? null }),
     headers: authHeader(token),
   });
 }
@@ -263,7 +264,7 @@ export function listUsers(token: string) {
 }
 
 export function createUser(
-  data: { name: string; email: string; password: string; rule: "admin" | "employee"; groupToolsAllowedId?: string | null },
+  data: { name: string; email: string; password: string; rule: "admin" | "employee"; groupToolsAllowedId?: string | null; controlGroupRagId?: string | null },
   token: string,
 ) {
   return request<{ user: User }>("/users", {
@@ -275,7 +276,7 @@ export function createUser(
 
 export function updateUser(
   id: string,
-  data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee"; groupToolsAllowedId?: string | null },
+  data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee"; groupToolsAllowedId?: string | null; controlGroupRagId?: string | null },
   token: string,
 ) {
   return request<{ user: User }>(`/users/${id}`, {
@@ -560,6 +561,42 @@ export function unlinkGroupToolsAllowedTool(
   token: string,
 ) {
   return request<void>(`/group-tools-allowed/${id}/tools/${toolId}?type=${type}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}
+
+export function listControlGroupRag(token: string) {
+  return request<{ groups: ControlGroupRag[] }>("/control-group-rag", {
+    headers: authHeader(token),
+  });
+}
+
+export function createControlGroupRag(
+  data: { title: string },
+  token: string,
+) {
+  return request<{ group: ControlGroupRag }>("/control-group-rag", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function updateControlGroupRag(
+  id: string,
+  data: { title?: string },
+  token: string,
+) {
+  return request<{ group: ControlGroupRag }>(`/control-group-rag/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function deleteControlGroupRag(id: string, token: string) {
+  return request<void>(`/control-group-rag/${id}`, {
     method: "DELETE",
     headers: authHeader(token),
   });

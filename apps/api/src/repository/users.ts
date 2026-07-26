@@ -8,6 +8,7 @@ export type UserRow = {
   password: string;
   rule: "admin" | "employee";
   group_tools_allowed_id: string | null;
+  control_group_rag_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -18,6 +19,7 @@ export type UserPublic = {
   email: string;
   rule: "admin" | "employee";
   groupToolsAllowedId: string | null;
+  controlGroupRagId: string | null;
   createdAt: string;
 };
 
@@ -29,13 +31,14 @@ export class UsersRepository {
       email: row.email,
       rule: row.rule,
       groupToolsAllowedId: row.group_tools_allowed_id ?? null,
+      controlGroupRagId: row.control_group_rag_id ?? null,
       createdAt: row.created_at,
     };
   }
 
   async listUsers(): Promise<UserPublic[]> {
     const rows = await db("users")
-      .select("id", "name", "email", "rule", "group_tools_allowed_id", "created_at")
+      .select("id", "name", "email", "rule", "group_tools_allowed_id", "control_group_rag_id", "created_at")
       .orderBy("created_at", "desc");
     return rows.map((row: any) => this.toPublic(row));
   }
@@ -56,6 +59,7 @@ export class UsersRepository {
     password: string;
     rule: "admin" | "employee";
     groupToolsAllowedId?: string | null;
+    controlGroupRagId?: string | null;
   }): Promise<UserPublic> {
     const hashed = await bcrypt.hash(data.password, 10);
     const [row] = await db("users")
@@ -65,14 +69,15 @@ export class UsersRepository {
         password: hashed,
         rule: data.rule,
         group_tools_allowed_id: data.groupToolsAllowedId ?? null,
+        control_group_rag_id: data.controlGroupRagId ?? null,
       })
-      .returning(["id", "name", "email", "rule", "group_tools_allowed_id", "created_at"]);
+      .returning(["id", "name", "email", "rule", "group_tools_allowed_id", "control_group_rag_id", "created_at"]);
     return this.toPublic(row);
   }
 
   async updateUser(
     id: string,
-    data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee"; groupToolsAllowedId?: string | null },
+    data: { name?: string; email?: string; password?: string; rule?: "admin" | "employee"; groupToolsAllowedId?: string | null; controlGroupRagId?: string | null },
   ): Promise<UserPublic | null> {
     const update: Record<string, any> = {};
     if (data.name !== undefined) update.name = data.name;
@@ -82,12 +87,13 @@ export class UsersRepository {
     }
     if (data.rule !== undefined) update.rule = data.rule;
     if (data.groupToolsAllowedId !== undefined) update.group_tools_allowed_id = data.groupToolsAllowedId;
+    if (data.controlGroupRagId !== undefined) update.control_group_rag_id = data.controlGroupRagId;
     update.updated_at = db.fn.now();
 
     const [row] = await db("users")
       .where({ id })
       .update(update)
-      .returning(["id", "name", "email", "rule", "group_tools_allowed_id", "created_at"]);
+      .returning(["id", "name", "email", "rule", "group_tools_allowed_id", "control_group_rag_id", "created_at"]);
     return row ? this.toPublic(row) : null;
   }
 

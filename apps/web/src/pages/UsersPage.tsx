@@ -11,14 +11,16 @@ import {
   linkGroupToolsAllowedTools,
   listTools,
   listMcps,
+  listControlGroupRag,
 } from "../api";
 import { loadSession } from "../auth";
-import type { User, GroupToolsAllowed, Tool, Mcp } from "../types";
+import type { User, GroupToolsAllowed, ControlGroupRag, Tool, Mcp } from "../types";
 
 export function UsersPage() {
   const session = loadSession();
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<GroupToolsAllowed[]>([]);
+  const [controlGroups, setControlGroups] = useState<ControlGroupRag[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
@@ -28,6 +30,7 @@ export function UsersPage() {
   const [formPassword, setFormPassword] = useState("");
   const [formRule, setFormRule] = useState<"admin" | "employee">("employee");
   const [formGroupId, setFormGroupId] = useState<string>("");
+  const [formControlGroupRagId, setFormControlGroupRagId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -58,7 +61,15 @@ export function UsersPage() {
     } catch { }
   }
 
-  useEffect(() => { loadUsers(); loadGroups(); }, []);
+  async function loadControlGroups() {
+    if (!session?.token) return;
+    try {
+      const { groups } = await listControlGroupRag(session.token);
+      setControlGroups(groups);
+    } catch { }
+  }
+
+  useEffect(() => { loadUsers(); loadGroups(); loadControlGroups(); }, []);
 
   function openCreateModal() {
     setEditingUser(null);
@@ -67,6 +78,7 @@ export function UsersPage() {
     setFormPassword("");
     setFormRule("employee");
     setFormGroupId("");
+    setFormControlGroupRagId("");
     setShowModal(true);
     setSubmitting(false);
   }
@@ -78,6 +90,7 @@ export function UsersPage() {
     setFormPassword("");
     setFormRule(user.rule);
     setFormGroupId(user.groupToolsAllowedId ?? "");
+    setFormControlGroupRagId(user.controlGroupRagId ?? "");
     setShowModal(true);
     setSubmitting(false);
   }
@@ -90,6 +103,7 @@ export function UsersPage() {
     setFormPassword("");
     setFormRule("employee");
     setFormGroupId("");
+    setFormControlGroupRagId("");
     setSubmitting(false);
   }
 
@@ -99,11 +113,12 @@ export function UsersPage() {
     setSubmitting(true);
     try {
       if (editingUser) {
-        const payload: { name: string; email: string; rule: "admin" | "employee"; password?: string; groupToolsAllowedId?: string | null } = {
+        const payload: { name: string; email: string; rule: "admin" | "employee"; password?: string; groupToolsAllowedId?: string | null; controlGroupRagId?: string | null } = {
           name: formName.trim(),
           email: formEmail.trim(),
           rule: formRule,
           groupToolsAllowedId: formRule === "employee" ? (formGroupId || null) : null,
+          controlGroupRagId: formControlGroupRagId || null,
         };
         if (formPassword.trim()) {
           payload.password = formPassword.trim();
@@ -117,6 +132,7 @@ export function UsersPage() {
             password: formPassword.trim(),
             rule: formRule,
             groupToolsAllowedId: formRule === "employee" ? (formGroupId || null) : null,
+            controlGroupRagId: formControlGroupRagId || null,
           },
           session.token,
         );
@@ -260,6 +276,7 @@ export function UsersPage() {
               <th>Email</th>
               <th>Role</th>
               <th>Group</th>
+              <th>Control Group RAG</th>
               <th>Created at</th>
               <th>Actions</th>
             </tr>
@@ -277,6 +294,12 @@ export function UsersPage() {
                 <td>
                   {user.groupToolsAllowedId
                     ? groups.find((g) => g.id === user.groupToolsAllowedId)?.title ?? "-"
+                    : <span className="muted">-</span>
+                  }
+                </td>
+                <td>
+                  {user.controlGroupRagId
+                    ? controlGroups.find((g) => g.id === user.controlGroupRagId)?.title ?? "-"
                     : <span className="muted">-</span>
                   }
                 </td>
@@ -338,6 +361,15 @@ export function UsersPage() {
                   </select>
                 </label>
               )}
+              <label>
+                Control Group RAG
+                <select value={formControlGroupRagId} onChange={(e) => setFormControlGroupRagId(e.target.value)}>
+                  <option value="">No group</option>
+                  {controlGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.title}</option>
+                  ))}
+                </select>
+              </label>
               <div className="modal-actions">
                 <button type="button" className="ghost-button" onClick={closeModal}>
                   Cancel

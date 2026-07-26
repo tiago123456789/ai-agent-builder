@@ -41,6 +41,7 @@ export class AuthController {
           email: user.email,
           name: user.name,
           rule: user.rule,
+          controlGroupRagId: user.controlGroupRagId,
         },
       });
     } catch (error) {

@@ -95,6 +95,13 @@ export type AgentResponse = {
   };
 };
 
+export type ControlGroupRag = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type GroupToolsAllowed = {
   id: string;
   title: string;

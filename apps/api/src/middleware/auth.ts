@@ -10,6 +10,7 @@ declare global {
         name: string;
         rule: "admin" | "employee";
         groupToolsAllowedId?: string | null;
+        controlGroupRagId?: string | null;
       };
     }
   }
