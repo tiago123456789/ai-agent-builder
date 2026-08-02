@@ -26,6 +26,9 @@ can set the agents for specific employees.
 - [x] Tool to track and save user questions/actions executed in background to avoid impacting user experience, helping admins improve prompts, RAG, and add new tools/MCPs to agents.
 - [x] AI Agent Embed Link - Embed agents in third-party applications without implementation using iframe or HTML embed tags.
 - [x] Multi Agent Feature - Create multi-agent workflows using Langgraph graph-based architecture by selecting existing AI agents.
+- [x] Auto-Install Tool Plugins - Tool packages are installed automatically at runtime with `bun install`, allowing the platform to scale using serverless container solutions like Cloud Run without manual installation steps.
+- [x] Control tools and MCP access per user group - The admin can create a group and select which tools and MCP servers the users of that group can use, so two employees can access the same agent with different permissions to execute actions.
+- [x] Control RAG data access per user group - The admin can create groups to control what data each user can see from RAG, so an employee only sees the RAG information of their group and only the admin can see everything.
 
 Monorepo with:
 
@@ -399,4 +402,50 @@ The platform supports tracing AI agent interactions with MLflow to monitor token
 ### Docker Setup
 
 When using Docker Compose, MLflow is automatically started as part of the stack. The tracing URL `http://mlflow:5000/gateway/mlflow/v1` resolves via the internal Docker network.
+
+## Auto-Install Tool Plugins (Serverless Containers)
+
+The platform can automatically install your tool plugins at runtime, so you do not need to manually run `bun install <package>` for every tool you register. This makes the API fully compatible with serverless container solutions such as **Cloud Run**, where the filesystem is ephemeral and each instance is scaled independently.
+
+### How it works
+
+The API's Dockerfile (`apps/api/Dockerfile`) is built to install and run the tool plugins automatically:
+
+- Dependencies are installed at container build time with `bun install --production`.
+- Bun's cache is redirected to a writable runtime directory with `BUN_INSTALL_CACHE_DIR=/tmp/.bun-cache`.
+- The container starts with `bun run --install=fallback src/index.ts`, so any tool package declared in `package.json` that is not yet installed is fetched automatically at runtime.
+
+Because of this, you can scale the AI agent builder horizontally using serverless container architectures without problems:
+
+1. Register your tool plugin in the dashboard (`/tools`) pointing to its npm package name.
+2. Enable the tool for an agent.
+3. Deploy the API as a serverless container. The tool package is installed automatically on startup — no manual installation step is required.
+
+## Control Tools and MCP Access per User Group
+
+Admins can create groups that define which **tools** and **MCP servers** each user is allowed to use. This way, two employees can have access to the same AI agent, but with different permission levels to execute actions.
+
+For example, a manager user can have access to tools that execute actions on third-party apps, while another employee in the same department can only chat with the agent without executing those actions.
+
+### How it works
+
+1. As an admin, create a group (title + description) in the **Users** page.
+2. Link the tools and MCP servers that group is allowed to use (each entry is marked as `TOOL` or `MCP`).
+3. Assign the group to a user when creating or editing the user.
+4. When that user chats with an agent, the AI agent service loads the user's group and filters the agent's tools and MCP servers to only the ones allowed for that group.
+
+Users without a group keep access to all tools and MCP servers enabled on the agent, and admins are not restricted by this feature.
+
+## Control RAG Data Access per User Group
+
+Admins can control which parts of the RAG data each employee can see, so a user who belongs to a specific group can only access the RAG information scoped to that group. Only admins can see everything.
+
+### How it works
+
+1. As an admin, create a RAG visibility group in the RAG data stores page.
+2. When adding or updating a RAG document, select the group that should be allowed to see it. The document is stored with the group metadata.
+3. Assign a RAG group to a user when creating or editing the user.
+4. When that user chats with an agent that uses RAG, the vector store retriever filters the documents by the user's group, so only the documents of that group are used as context to answer the question.
+
+Documents without a group assigned are not visible to employees, and only admins can access all RAG data.
 
