@@ -1,9 +1,45 @@
-FROM oven/bun:1 AS deps
-WORKDIR /app
-COPY package.json ./
-RUN bun install --production
+# FROM oven/bun:1 AS deps
+# WORKDIR /app
+# COPY package.json ./
+# RUN bun install --production
 
-FROM oven/bun:1-alpine AS production
+# FROM oven/bun:1-alpine AS production
+
+# # Install Python, curl, and necessary certificates for uv
+# RUN apk add --no-cache \
+#     python3 \
+#     py3-pip \
+#     curl \
+#     ca-certificates
+
+# # Install uv & uvx natively from the official Astral repository
+# ADD https://astral.sh/uv/install.sh /uv-installer.sh
+# RUN sh /uv-installer.sh && rm /uv-installer.sh
+
+# # Expose uvx binaries and set environment variables
+# ENV PATH="/root/.local/bin:$PATH" \
+#     UV_COMPILE_BYTECODE=1 \
+#     UV_LINK_MODE=copy
+
+# # Verify installations
+# RUN bunx --version && uvx --version
+
+# # Install Docker CLI
+# RUN apk add --no-cache docker-cli
+
+# WORKDIR /app
+# COPY --from=deps /app/node_modules ./node_modules
+# COPY . .
+# EXPOSE 3001
+# CMD ["bun", "src/index.ts"]
+
+FROM oven/bun:1-alpine
+
+# Set up the working directory
+WORKDIR /app
+
+# Configure Bun to cache in a writable runtime directory
+ENV BUN_INSTALL_CACHE_DIR=/tmp/.bun-cache
 
 # Install Python, curl, and necessary certificates for uv
 RUN apk add --no-cache \
@@ -27,8 +63,17 @@ RUN bunx --version && uvx --version
 # Install Docker CLI
 RUN apk add --no-cache docker-cli
 
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy project configuration files
+COPY package.json bun.lock* ./
+
 COPY . .
+
+RUN bun install --production
+
 EXPOSE 3001
-CMD ["bun", "src/index.ts"]
+
+# Ensure the directory is fully owned by the executing user
+RUN chown -R root:root /app
+
+# Execute with runtime installation enabled
+CMD ["bun", "run", "--install=fallback", "src/index.ts"]
