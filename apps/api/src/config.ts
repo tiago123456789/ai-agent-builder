@@ -15,4 +15,5 @@ export const config = {
   defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD,
   upstashCacheUrl: process.env.UPSTASH_CACHE_URL ?? "",
   upstashCacheToken: process.env.UPSTASH_CACHE_TOKEN ?? "",
+  assemblyaiApiKey: process.env.ASSEMBLYAI_API_KEY ?? "",
 };
