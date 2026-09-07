@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { getLLMProviderConfig, hasLLMProviderConfigured } from "../lib/llm-provider";
 import { AgentsRepository } from "../repository/agents";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import type {
@@ -62,9 +63,13 @@ class AiAgentService {
         `;
 
         try {
+            const { apiKey, baseURL } = getLLMProviderConfig();
+
             const evaluatorModel = new ChatOpenAI({
                 model: "gpt-4o-mini",
                 temperature: 0.0,
+                apiKey,
+                ...(baseURL ? { configuration: { baseURL } } : {}),
             });
 
             const evalResult = await evaluatorModel.invoke(evaluationPrompt);
@@ -181,8 +186,8 @@ class AiAgentService {
 
 
     public async execute(params: AiAgentParams): Promise<AgentResponse> {
-        if (!config.openaiApiKey) {
-            throw new Error("OPENAI_API_KEY is not configured.");
+        if (!hasLLMProviderConfigured()) {
+            throw new Error("No LLM provider configured (OPENAI_API_KEY or OPENROUTER_API_KEY).");
         }
 
 
@@ -345,12 +350,20 @@ class AiAgentService {
             `${process.env.MLFLOW_USERNAME}:${process.env.MLFLOW_PASWORD}`
         ).toString("base64");
 
+        const { apiKey: providerApiKey, baseURL: providerBaseURL } = getLLMProviderConfig();
+
         let latestListedQueries: SavedQuery[] = []
 
         const defaultOptions: { [key: string]: any } = {
-            apiKey: config.openaiApiKey,
+            apiKey: providerApiKey,
             model: agentBySlug.model,
             temperature: agentBySlug.temperature,
+        }
+
+        if (providerBaseURL) {
+            defaultOptions.configuration = {
+                baseURL: providerBaseURL,
+            }
         }
 
         if (agentBySlug.tracingEnabled) {

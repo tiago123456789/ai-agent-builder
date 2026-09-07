@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { getLLMProviderConfig, hasLLMProviderConfigured } from "../lib/llm-provider";
 import { ChatOpenAI } from "@langchain/openai";
 import { Annotation, MessagesAnnotation, StateGraph, MemorySaver } from "@langchain/langgraph";
 import { z } from "zod";
@@ -17,8 +18,8 @@ export interface MultiAgentChatParams {
 
 class MultiAgentService {
   async execute(params: MultiAgentChatParams): Promise<AgentResponse> {
-    if (!config.openaiApiKey) {
-      throw new Error("OPENAI_API_KEY is not configured.");
+    if (!hasLLMProviderConfigured()) {
+      throw new Error("No LLM provider configured (OPENAI_API_KEY or OPENROUTER_API_KEY).");
     }
 
     const multiAgent = await multiAgentsRepository.getMultiAgentById(params.multiAgentId);
@@ -30,9 +31,13 @@ class MultiAgentService {
       throw new Error("Multi agent has no nodes configured.");
     }
 
+    const { apiKey, baseURL } = getLLMProviderConfig();
+
     const model = new ChatOpenAI({
       model: "gpt-4o-mini",
       temperature: 0.0,
+      apiKey,
+      ...(baseURL ? { configuration: { baseURL } } : {}),
     });
 
     const nodes = multiAgent.nodes;

@@ -29,6 +29,7 @@ can set the agents for specific employees.
 - [x] Auto-Install Tool Plugins - Tool packages are installed automatically at runtime with `bun install`, allowing the platform to scale using serverless container solutions like Cloud Run without manual installation steps.
 - [x] Control tools and MCP access per user group - The admin can create a group and select which tools and MCP servers the users of that group can use, so two employees can access the same agent with different permissions to execute actions.
 - [x] Control RAG data access per user group - The admin can create groups to control what data each user can see from RAG, so an employee only sees the RAG information of their group and only the admin can see everything.
+- [x] Multi-provider support with OpenRouter - Use a wide range of AI models (OpenAI, Anthropic, Google Gemini, free models, and more) through OpenRouter with a single API key. If one provider is unavailable, you can switch the agent to another model without changing the platform.
 
 Monorepo with:
 
@@ -49,6 +50,10 @@ PORT=3001
 CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=
 OPENAI_API_KEY=
+
+# Optional: route all model calls through OpenRouter instead of the OpenAI API
+OPENROUTER_API_KEY=
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 
 DATABASE_URL=
 
@@ -402,6 +407,51 @@ The platform supports tracing AI agent interactions with MLflow to monitor token
 ### Docker Setup
 
 When using Docker Compose, MLflow is automatically started as part of the stack. The tracing URL `http://mlflow:5000/gateway/mlflow/v1` resolves via the internal Docker network.
+
+## OpenRouter Support
+
+The platform can route all AI model calls through [OpenRouter](https://openrouter.ai) instead of talking directly to the OpenAI API. OpenRouter gives you access to many providers with a single API key — OpenAI, Anthropic, Google Gemini, Mistral, Meta Llama (including free models), and more — and it is fully compatible with the OpenAI API format used by the platform.
+
+### Why use OpenRouter?
+
+- **One key, many models**: pick the best model for each agent from dozens of providers without adding new API keys.
+- **Provider redundancy**: if a provider/platform is unavailable or having an outage, you can switch an agent to a different model (e.g. Google Gemini or an Anthropic model) without changing anything else.
+- **Cost flexibility**: use cheap or free models for simple demands and reserve premium models where it matters.
+
+### Setting it up
+
+Create a free account at [openrouter.ai](https://openrouter.ai), generate an API key, and set it in `apps/api/.env`:
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+When `OPENROUTER_API_KEY` is set, the platform uses OpenRouter for:
+
+- Agent chat execution (the model configured on each agent)
+- Guardrail evaluation
+- Multi-agent supervisor routing
+- The model list on the `/models` endpoint (used to populate the model dropdown in the dashboard)
+
+When `OPENROUTER_API_KEY` is empty, the platform falls back to the direct OpenAI API (`OPENAI_API_KEY`) as before.
+
+`OPENROUTER_BASE_URL` is optional and defaults to `https://openrouter.ai/api/v1`.
+
+### Using OpenRouter model IDs
+
+Agent models are configured per agent in the dashboard. With OpenRouter enabled, set the agent's model to an OpenRouter model ID, for example:
+
+- `openai/gpt-4o-mini`
+- `anthropic/claude-3.5-sonnet`
+- `google/gemini-2.0-flash`
+- `meta-llama/llama-3.3-70b-instruct`
+
+The model list returned by the API (and shown in the dashboard dropdown) reflects the models available on the configured provider — OpenRouter models when OpenRouter is enabled, OpenAI models otherwise.
+
+### RAG embeddings
+
+RAG embeddings still use the OpenAI Embeddings API (`OPENAI_API_KEY`), independent of OpenRouter.
 
 ## Auto-Install Tool Plugins (Serverless Containers)
 
