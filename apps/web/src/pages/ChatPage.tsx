@@ -3,6 +3,7 @@ import { listAgents, sendAgentMessage } from "../api";
 import { loadSession } from "../auth";
 import type { Agent, AgentChatMessage, AgentResponse } from "../types";
 import ReactMarkdown from 'react-markdown';
+import { VoiceInputButton } from "../components/VoiceInputButton";
 
 type ChatMessage =
   | { id: string; role: "user"; content: string }
@@ -232,9 +233,18 @@ export function ChatPage() {
           />
           <div className="chat-form-footer">
             {error ? <p className="error-text">{error}</p> : <span />}
-            <button className="primary-button" disabled={isSending || !selectedAgent} type="submit">
-              {isSending ? "Sending..." : "Send"}
-            </button>
+            <div className="chat-form-actions">
+              <VoiceInputButton
+                token={session?.token}
+                disabled={!selectedAgent}
+                onTranscribed={(text) =>
+                  setInput((current) => (current ? `${current} ${text}` : text))
+                }
+              />
+              <button className="primary-button" disabled={isSending || !selectedAgent} type="submit">
+                {isSending ? "Sending..." : "Send"}
+              </button>
+            </div>
           </div>
         </form>
       </section>
