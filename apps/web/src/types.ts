@@ -162,3 +162,15 @@ export type MultiAgent = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type Webhook = {
+  id: string;
+  name: string;
+  slug: string;
+  agentId: string;
+  typeAgent: "ai_agent" | "multi_agent";
+  integrationName: string;
+  config: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+};

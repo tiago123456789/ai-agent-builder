@@ -9,6 +9,7 @@ import { ChatPage } from "./pages/ChatPage";
 import { LoginPage } from "./pages/LoginPage";
 import { McpsPage } from "./pages/McpsPage";
 import { MultiAgentsPage } from "./pages/MultiAgentsPage";
+import { WebhooksPage } from "./pages/WebhooksPage";
 import { PublicChatPage } from "./pages/PublicChatPage";
 import { RagDataStoresPage } from "./pages/RagDataStoresPage";
 import { SkillsPage } from "./pages/SkillsPage";
@@ -91,6 +92,14 @@ const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <MultiAgentsPage />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "webhooks",
+        element: (
+          <AdminRoute>
+            <WebhooksPage />
           </AdminRoute>
         ),
       },
