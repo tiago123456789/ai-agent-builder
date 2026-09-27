@@ -128,3 +128,23 @@ export type AgentRequest = {
   message: string;
   history: AgentChatMessage[];
 };
+
+export type WebhookTypeAgent = "multi_agent" | "ai_agent";
+
+export type WebhookConfig = Record<string, string>;
+
+export type Webhook = {
+  id: string;
+  name: string;
+  slug: string;
+  agentId: string;
+  typeAgent: WebhookTypeAgent;
+  integrationName: string;
+  config: WebhookConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const WEBHOOK_NATIVE_INTEGRATIONS = ["telegram"] as const;
+
+export type WebhookIntegrationName = (typeof WEBHOOK_NATIVE_INTEGRATIONS)[number];

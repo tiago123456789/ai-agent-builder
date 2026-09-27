@@ -614,3 +614,45 @@ export function sendMultiAgentMessage(
     headers: authHeader(token),
   });
 }
+
+export function listWebhooks(token: string) {
+  return request<{ webhooks: import("./types").Webhook[] }>("/webhooks", {
+    headers: authHeader(token),
+  });
+}
+
+export function listWebhookIntegrations(token: string) {
+  return request<{ integrations: string[] }>("/webhooks/integrations", {
+    headers: authHeader(token),
+  });
+}
+
+export function createWebhook(
+  data: { name: string; agentId: string; typeAgent: "ai_agent" | "multi_agent"; integrationName: string; config: Record<string, string> },
+  token: string,
+) {
+  return request<{ webhook: import("./types").Webhook }>("/webhooks/create", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function updateWebhook(
+  id: string,
+  data: { name?: string; agentId?: string; typeAgent?: "ai_agent" | "multi_agent"; integrationName?: string; config?: Record<string, string> },
+  token: string,
+) {
+  return request<{ webhook: import("./types").Webhook }>(`/webhooks/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+    headers: authHeader(token),
+  });
+}
+
+export function deleteWebhook(id: string, token: string) {
+  return request<void>(`/webhooks/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
+  });
+}

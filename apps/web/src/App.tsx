@@ -34,6 +34,9 @@ export default function App() {
                   <NavLink to="/multi-agents" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
                     Multi Agents
                   </NavLink>
+                  <NavLink to="/webhooks" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                    Webhooks
+                  </NavLink>
                   <NavLink to="/rag-data-stores" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
                     RAG
                   </NavLink>
