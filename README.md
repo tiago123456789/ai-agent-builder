@@ -26,6 +26,7 @@ can set the agents for specific employees.
 - [x] Tool to track and save user questions/actions executed in background to avoid impacting user experience, helping admins improve prompts, RAG, and add new tools/MCPs to agents.
 - [x] AI Agent Embed Link - Embed agents in third-party applications without implementation using iframe or HTML embed tags.
 - [x] Multi Agent Feature - Create multi-agent workflows using Langgraph graph-based architecture by selecting existing AI agents.
+- [x] Telegram bot integration via webhooks - Connect a Telegram bot to an AI agent or multi-agent workflow; incoming updates trigger the agent and the reply is sent back to Telegram.
 - [x] Auto-Install Tool Plugins - Tool packages are installed automatically at runtime with `bun install`, allowing the platform to scale using serverless container solutions like Cloud Run without manual installation steps.
 - [x] Control tools and MCP access per user group - The admin can create a group and select which tools and MCP servers the users of that group can use, so two employees can access the same agent with different permissions to execute actions.
 - [x] Control RAG data access per user group - The admin can create groups to control what data each user can see from RAG, so an employee only sees the RAG information of their group and only the admin can see everything.
@@ -247,6 +248,99 @@ User Input → Intent Classifier Agent →
 - **Content Creation**: Chain agents for research → writing → editing workflows
 - **Data Processing**: Pipeline agents for extraction → transformation → analysis
 - **Decision Making**: Parallel agents for different perspectives → aggregation agent
+
+## Connect Telegram Bots to AI Agents via Webhooks
+
+Webhooks connect a Telegram bot to an AI agent or multi-agent workflow. A webhook row stores which agent handles the request and how to extract data from the incoming payload. Any external system can then trigger the agent with a public HTTP call, and the agent's reply is sent back to Telegram using the bot token stored on the webhook.
+
+### How it works
+
+1. An admin creates a webhook linking an `agent_id` (`ai_agent` or `multi_agent`) to an `integration_name` (currently only `telegram`) plus a `config` mapping.
+2. An external system sends `POST /webhook/:slug` with its event payload (e.g. a Telegram update body).
+3. The API extracts the user message (`text`) and conversation identifier (`sessionId`) from the body using the lodash paths declared in `config`.
+4. The message is dispatched to the AI agent service (single agent) or the multi-agent service (workflow), and the resulting reply is delivered to Telegram via the per-webhook bot token.
+
+### Webhook fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | `varchar(120)`, required | Human label. The `slug` is auto-derived: spaces become `_` and accentuations are stripped (`Support Agent` → `support_agent`, `Ação` → `acao`). |
+| `slug` | `varchar(255)`, unique | Generated from `name` on create; regenerated on rename. |
+| `agentId` | `uuid`, required | Must exist in `agents` when `typeAgent` is `ai_agent`, or in `multi_agents` when `typeAgent` is `multi_agent`. No database foreign key; validated by the API. |
+| `typeAgent` | `multi_agent` \| `ai_agent`, required | Selects the multi-agent service or the single AI agent service. |
+| `integrationName` | enum of `WEBHOOK_NATIVE_INTEGRATIONS`, required | Currently only `telegram`; any other value is rejected with `400`. |
+| `config` | `jsonb` object of string paths, required | Must include `text` and `sessionId` keys (see below). |
+
+### Config reference
+
+Each `config` value is either a lodash path into the incoming request body or a literal value:
+
+```json
+{
+  "sessionId": "message.chat.id",
+  "text": "message.text",
+  "telegramBotToken": "123456:ABC-DEF...",
+  "telegramChatId": "message.chat.id"
+}
+```
+
+- `sessionId` (required): path to the conversation identifier (e.g. the Telegram chat id). Falls back to a random UUID when unresolvable.
+- `text` (required): path to the user message (e.g. `message.text`). A missing value returns `400`.
+- `telegramBotToken`: path or literal bot token. Stored per webhook on the `config` column.
+- `telegramChatId`: path or literal destination chat. Falls back to `sessionId` when absent.
+- Resolution rule: a value containing `.` or `[` is treated as a lodash path (a miss returns an error for `text`); otherwise the raw string is used as a literal (e.g. `"-100123"`).
+
+### Endpoints
+
+Management endpoints require JWT auth; create/update/delete additionally require admin:
+
+| Method & path | Auth | Description |
+|---|---|---|
+| `GET /webhooks` | auth | List webhooks. |
+| `GET /webhooks/integrations` | auth | List native integrations. Returns `{ "integrations": ["telegram"] }`. Registered before `/:id` so it is not matched as an id. |
+| `GET /webhooks/:id` | auth | Get a webhook by id. |
+| `POST /webhooks/create` | auth + admin | Create a webhook (`name`, `agentId`, `typeAgent`, `integrationName`, `config`). |
+| `PUT /webhooks/:id` | auth + admin | Update a webhook; renaming regenerates the `slug`. |
+| `DELETE /webhooks/:id` | auth + admin | Delete a webhook. |
+| `POST /webhook/:slug` | public | Trigger a webhook. Returns `{ webhook, sessionId, text, response, telegramSent, telegramError? }`. Telegram delivery failures are reported via `telegramSent: false` without failing the request. |
+
+Error codes: `401` without token, `403` non-admin on mutating routes, `404` unknown webhook, `400` invalid body / unknown agent / unsupported integration / unresolvable text, `409` slug conflict.
+
+### Example: create a Telegram webhook
+
+```bash
+curl --request POST 'http://localhost:3001/webhooks/create' \
+  --header 'Authorization: Bearer <jwt>' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "name": "Support Agent",
+    "agentId": "d89114b5-2650-4688-96f6-5ac4f736b262",
+    "typeAgent": "ai_agent",
+    "integrationName": "telegram",
+    "config": {
+      "sessionId": "message.chat.id",
+      "text": "message.text",
+      "telegramBotToken": "123456:ABC-DEF...",
+      "telegramChatId": "message.chat.id"
+    }
+  }'
+```
+
+### Example: trigger the webhook
+
+```bash
+curl --request POST 'http://localhost:3001/webhook/support_agent' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "message": { "chat": { "id": "123456" }, "text": "What are your opening hours?" }
+  }'
+```
+
+The API resolves `text` to `"What are your opening hours?"` and `sessionId` to `"123456"`, runs the linked agent, and posts the agent's reply to Telegram chat `123456`.
+
+### Dashboard
+
+Admins can manage webhooks at `/webhooks` in the web app: list webhooks, open **New Webhook** to configure name, agent type, agent, integration (populated from `GET /webhooks/integrations`) and the key/value `config` editor, then copy the `POST /webhook/:slug` trigger URL from each card.
 
 ## Create your custom tool
 
