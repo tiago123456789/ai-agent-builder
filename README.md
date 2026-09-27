@@ -31,6 +31,7 @@ can set the agents for specific employees.
 - [x] Control tools and MCP access per user group - The admin can create a group and select which tools and MCP servers the users of that group can use, so two employees can access the same agent with different permissions to execute actions.
 - [x] Control RAG data access per user group - The admin can create groups to control what data each user can see from RAG, so an employee only sees the RAG information of their group and only the admin can see everything.
 - [x] Multi-provider support with OpenRouter - Use a wide range of AI models (OpenAI, Anthropic, Google Gemini, free models, and more) through OpenRouter with a single API key. If one provider is unavailable, you can switch the agent to another model without changing the platform.
+- [x] Voice input (speech-to-text) with AssemblyAI - Record audio with the microphone and transcribe it into text to interact with agents using your voice, just like voice mode in ChatGPT.
 
 Monorepo with:
 
@@ -64,6 +65,9 @@ DEFAULT_ADMIN_EMAIL= // default email
 DEFAULT_ADMIN_PASSWORD= // default password
 
 ENCRYPT_KEY=  # 64-character hex key for AES-256
+
+# Optional: speech-to-text for the voice input feature (mic → AssemblyAI)
+ASSEMBLYAI_API_KEY=
 ```
 
 > **ENCRYPT_KEY** is used by the AES-256-CBC algorithm to encrypt sensitive data at rest, such as MCP server headers and RAG data store connection strings. It must be a 256-bit (32-byte) key encoded as a 64-character hex string.
@@ -592,4 +596,59 @@ Admins can control which parts of the RAG data each employee can see, so a user 
 4. When that user chats with an agent that uses RAG, the vector store retriever filters the documents by the user's group, so only the documents of that group are used as context to answer the question.
 
 Documents without a group assigned are not visible to employees, and only admins can access all RAG data.
+
+## Voice Input (Speech-to-Text with AssemblyAI)
+
+The chat screens include a microphone button next to the **Send** button, allowing you to interact with agents using your voice. The audio is recorded in the browser, transcribed to text with [AssemblyAI](https://www.assemblyai.com), and the resulting text is inserted into the chat input so you can review and send it as a prompt — similar to voice mode in ChatGPT.
+
+The voice input is available on every chat screen:
+
+- **Main chat** (`/`) and **agent chat** (`/chats/agent/:slug`, multi-agent): authenticates with the user's JWT token.
+- **Public/embedded chat** (third-party embed): authenticates with the agent's API key.
+
+### How it works
+
+1. Click the **microphone icon** to start recording. The icon changes to a recording state with a pulsing indicator and a "Recording..." label while capturing audio via the browser's `MediaRecorder` API.
+2. Click again to **stop recording**. A spinning loader and a "Transcribing..." label are shown while the audio is processed.
+3. The recorded audio is uploaded (`multipart/form-data`) to the API, which forwards it to AssemblyAI:
+   - `POST /v2/upload` uploads the raw audio bytes and returns an `upload_url`.
+   - `POST /v2/transcript` submits the transcript request using the `universal-3-5-pro`/`universal-2` speech models with punctuation and text formatting enabled.
+   - `GET /v2/transcript/:id` is polled until the transcript is `completed` or `error`.
+4. The transcribed text is inserted into the chat textarea, where you can edit it and press **Send** to interact with the agent.
+
+### API endpoints
+
+| Method | Endpoint | Auth | Description |
+| ------ | -------- | ---- | ----------- |
+| `POST` | `/transcription/transcribe` | JWT (Bearer) | Transcribes an audio file for authenticated users |
+| `POST` | `/transcription/public/transcribe` | Agent API key | Transcribes an audio file for the public/embedded chat |
+
+Both endpoints accept a `multipart/form-data` upload with an `audio` field (the public one also requires an `apiKey` field) and return:
+
+```json
+{
+  "text": "The transcribed text of your recording"
+}
+```
+
+### Setting it up
+
+1. Create an account at [assemblyai.com](https://www.assemblyai.com) and generate an API key.
+2. Set the key in `apps/api/.env`:
+
+```env
+ASSEMBLYAI_API_KEY=your_assemblyai_api_key
+```
+
+3. Restart the API and reload the web app. The microphone button now transcribes your voice into text.
+
+### How it's implemented
+
+- **Frontend**: `apps/web/src/components/VoiceInputButton.tsx` (recording + UI), `apps/web/src/api.ts` (`transcribeAudio` / `transcribePublicAudio`).
+- **Backend**: `apps/api/src/services/transcription.service.ts` (AssemblyAI calls), `apps/api/src/controllers/transcription.ts`, `apps/api/src/routes/transcription.ts`.
+
+### Notes
+
+- The microphone requires a **secure context** (`https` or `localhost`) to be accessed by the browser, so the public/embedded chat must be served over HTTPS for voice input to work.
+- The AssemblyAI API key never reaches the browser — transcription always happens server-side.
 

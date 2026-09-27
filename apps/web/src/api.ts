@@ -655,4 +655,33 @@ export function deleteWebhook(id: string, token: string) {
     method: "DELETE",
     headers: authHeader(token),
   });
+
+  async function transcribeRequest(audio: Blob, extraFields: Record<string, string>, path: string, token?: string) {
+  const formData = new FormData();
+  formData.append("audio", audio, "recording.webm");
+  for (const [key, value] of Object.entries(extraFields)) {
+    formData.append(key, value);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    body: formData,
+    ...(token ? { headers: authHeader(token) } : {}),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message ?? "Transcription failed");
+  }
+
+  return data as { text: string };
+}
+
+export function transcribeAudio(audio: Blob, token: string) {
+  return transcribeRequest(audio, {}, "/transcription/transcribe", token);
+}
+
+export function transcribePublicAudio(audio: Blob, apiKey: string) {
+  return transcribeRequest(audio, { apiKey }, "/transcription/public/transcribe");
 }

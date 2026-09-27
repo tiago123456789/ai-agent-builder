@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { getPublicAgentInfo, sendPublicAgentMessage } from "../api";
 import type { AgentChatMessage, AgentResponse } from "../types";
 import ReactMarkdown from "react-markdown";
+import { VoiceInputButton } from "../components/VoiceInputButton";
 
 type ChatMessage =
   | { id: string; role: "user"; content: string }
@@ -219,9 +220,17 @@ export function PublicChatPage() {
           />
           <div className="chat-form-footer">
             {error ? <p className="error-text">{error}</p> : <span />}
-            <button className="primary-button" disabled={isSending} type="submit">
-              {isSending ? "Sending..." : "Send"}
-            </button>
+            <div className="chat-form-actions">
+              <VoiceInputButton
+                apiKey={apiKey}
+                onTranscribed={(text) =>
+                  setInput((current) => (current ? `${current} ${text}` : text))
+                }
+              />
+              <button className="primary-button" disabled={isSending} type="submit">
+                {isSending ? "Sending..." : "Send"}
+              </button>
+            </div>
           </div>
         </form>
       </section>
